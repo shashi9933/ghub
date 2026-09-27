@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Callbreak (कॉल ब्रेक) — GameHub Arcade</title>
+  <link rel="stylesheet" href="shared/hub.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    .cb-arena {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 16px;
+      position: relative;
+    }
+
+    /* 4-Player Table Layout */
+    .cb-table {
+      width: 100%;
+      height: 480px;
+      background: radial-gradient(circle, #1a3828 0%, #0d2117 70%, #07120c 100%);
+      border: 6px solid #2e593d;
+      border-radius: 36px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.7), 0 16px 35px rgba(0,0,0,0.5);
+      margin: 12px 0;
+    }
+
+    /* Player Seats on Table (North, West, East, South) */
+    .table-seat {
+      position: absolute;
+      background: rgba(14, 20, 36, 0.9);
+      border: 3px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      z-index: 10;
+      transition: all 0.3s;
+    }
+    .table-seat.active-turn {
+      border-color: var(--cyan-pop);
+      background: rgba(0, 229, 255, 0.15);
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+      transform: scale(1.08);
+    }
+
+    .seat-north { top: 14px; }
+    .seat-west { left: 14px; }
+    .seat-east { right: 14px; }
+    .seat-south { bottom: 14px; }
+
+    /* Center Trick Area */
+    .trick-arena {
+      width: 220px;
+      height: 220px;
+      position: relative;
+      border: 2px dashed rgba(255,255,255,0.15);
+      border-radius: 50%;
+    }
+
+    .trick-slot {
+      position: absolute;
+      width: 68px;
+      height: 98px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .trick-north { top: 0; left: 50%; transform: translateX(-50%); }
+    .trick-south { bottom: 0; left: 50%; transform: translateX(-50%); }
+    .trick-west { left: 0; top: 50%; transform: translateY(-50%); }
+    .trick-east { right: 0; top: 50%; transform: translateY(-50%); }
+
+    /* French Deck Playing Card */
+    .p-card {
+      width: 68px;
+      height: 98px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      border: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 5px 6px;
+      user-select: none;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      flex-shrink: 0;
+    }
+    .p-card:hover {
+      transform: translateY(-16px) scale(1.08);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+      z-index: 50;
+    }
+    .p-card.playable {
+      border: 2px solid var(--cyan-pop);
+      box-shadow: 0 0 14px var(--cyan-pop);
+    }
+    .p-card.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+    }
+
+    .card-red { color: #d62828; }
+    .card-black { color: #1e1e24; }
+
+    .p-card-val { font-size: 15px; font-weight: 800; line-height: 1; }
+    .p-card-suit { font-size: 14px; line-height: 1; }
+    .p-card-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+    }
+
+    /* Player Hand Container */
+    .cb-hand-container {
+      width: 100%;
+      background: rgba(14, 20, 36, 0.85);
+      border: 3px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .cb-hand-cards {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 16px 8px 6px;
+    }
+
+    /* Bidding Modal */
+    .bid-btn-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .bid-btn {
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 800;
+      background: var(--bg-card);
+      border: 2px solid var(--border-card);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .bid-btn:hover {
+      border-color: var(--cyan-pop);
+      background: rgba(0, 229, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    /* Scoreboard Table */
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    .score-table th, .score-table td {
+      border: 1px solid var(--border-card);
+      padding: 6px 10px;
+      text-align: center;
+    }
+    .score-table th { background: rgba(255,255,255,0.08); font-weight: 800; }
+  </style>
+</head>
+<body>
+
+  <!-- GLOBAL ARCADE NAVBAR -->
+  <header class="arcade-navbar">
+    <a href="index.html" class="nav-brand">
+      <span>🎮</span> GameHub
+      <span class="nav-brand-badge" style="background:var(--cyan-pop); color:#0a192f;">Callbreak</span>
+    </a>
+
+    <ul class="nav-games-list">
+      <li><a href="uno.html" class="nav-game-link">🎴 Uno</a></li>
+      <li><a href="callbreak.html" class="nav-game-link active">♠️ Callbreak</a></li>
+      <li><a href="poker.html" class="nav-game-link">🃏 Poker</a></li>
+      <li><a href="blackjack.html" class="nav-game-link">🪙 Blackjack</a></li>
+      <li><a href="connect4.html" class="nav-game-link">🔴 Connect 4</a></li>
+    </ul>
+
+    <div class="nav-profile-pill" id="navProfileBtn">
+      <div class="nav-avatar-circle profile-avatar-display">🦊</div>
+      <span class="profile-name-display">Player</span>
+      <div class="nav-coins-badge">
+        <span>🪙</span>
+        <span class="profile-coins-display">10,000</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="cb-arena">
+
+    <!-- Top Status Bar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+      <div style="font-weight:800; font-size:16px;">
+        ♠️ Spades are Permanent Trump &bull; <span id="roundIndicator" style="color:var(--yellow-pop);">Round 1 of 5</span>
+      </div>
+      <button class="candy-btn btn-ghost" id="viewScoresBtn" style="padding:6px 16px; font-size:13px;">📊 Scoreboard</button>
+    </div>
+
+    <!-- Green Felt Card Table -->
+    <div class="cb-table">
+      <!-- Player North (Bot 2) -->
+      <div class="table-seat seat-north" id="seatNorth">
+        <span style="font-size:24px;">🤖</span>
+        <div>
+          <div style="font-weight:700; font-size:13px;" id="nameNorth">RoboAce</div>
+          <div style="font-size:11px; color:var(--yellow-pop);"><span id="bidNorth">Bid: -</span> | Won: <span id="wonNorth">0</span></div>
+        </div>
+      </div>
+
+      <!-- Player West (Bot 1) -->
+      <div class="table-seat seat-west" id="seatWest">
+        <span style="font-size:24px;">🦊</span>
+        <div>
+          <div style="font-weight:700; font-size:13px;" id="nameWest">FoxyKing</div>
+          <div style="font-size:11px; color:var(--yellow-pop);"><span id="bidWest">Bid: -</span> | Won: <span id="wonWest">0</span></div>
+        </div>
+      </div>
+
+      <!-- Player East (Bot 3) -->
+      <div class="table-seat seat-east" id="seatEast">
+        <span style="font-size:24px;">🐼</span>
+        <div>
+          <div style="font-weight:700; font-size:13px;" id="nameEast">PandaPro</div>
+          <div style="font-size:11px; color:var(--yellow-pop);"><span id="bidEast">Bid: -</span> | Won: <span id="wonEast">0</span></div>
+        </div>
+      </div>
+
+      <!-- Player South (Human You) -->
+      <div class="table-seat seat-south" id="seatSouth">
+        <span style="font-size:24px;" class="profile-avatar-display">🦊</span>
+        <div>
+          <div style="font-weight:700; font-size:13px;" class="profile-name-display">You</div>
+          <div style="font-size:11px; color:var(--yellow-pop);"><span id="bidSouth">Bid: -</span> | Won: <span id="wonSouth">0</span></div>
+        </div>
+      </div>
+
+      <!-- Center Trick Slot Area -->
+      <div class="trick-arena">
+        <div class="trick-slot trick-north" id="trickCardNorth"></div>
+        <div class="trick-slot trick-west" id="trickCardWest"></div>
+        <div class="trick-slot trick-east" id="trickCardEast"></div>
+        <div class="trick-slot trick-south" id="trickCardSouth"></div>
+      </div>
+    </div>
+
+    <!-- Status Message -->
+    <div id="cbStatusBanner" style="font-weight:800; font-size:17px; color:var(--cyan-pop); margin-bottom:6px;">
+      ♠️ Welcome to Callbreak! Bidding will begin.
+    </div>
+
+    <!-- Human Player Hand Area -->
+    <div class="cb-hand-container">
+      <div style="display:flex; justify-content:space-between; width:100%;">
+        <span style="font-weight:800; font-size:14px;">Your Hand (13 cards sorted by suit)</span>
+        <span style="color:var(--text-sub); font-size:13px;">Must follow led suit & beat if possible!</span>
+      </div>
+      <div class="cb-hand-cards" id="humanHandCards">
+        <!-- Injected cards -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bidding Modal -->
+  <div class="modal-overlay" id="bidModal" style="display:none;">
+    <div class="modal-box" style="text-align: center;">
+      <h2 class="modal-title">♠️ Place Your Bid (Call)</h2>
+      <p style="color:var(--text-sub); font-size:14px;">How many tricks do you predict you will win this round? (1 to 8):</p>
+      <div class="bid-btn-grid" id="bidBtnGrid">
+        <!-- 1 to 8 buttons -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoreboard Modal -->
+  <div class="modal-overlay" id="scoresModal" style="display:none;">
+    <div class="modal-box" style="max-width:550px;">
+      <button class="modal-close-btn" id="closeScoresBtn">&times;</button>
+      <h2 class="modal-title">📊 5-Round Scoreboard</h2>
+      <table class="score-table" id="scoreboardTable">
+        <thead>
+          <tr>
+            <th>Round</th>
+            <th>You</th>
+            <th>FoxyKing</th>
+            <th>RoboAce</th>
+            <th>PandaPro</th>
+          </tr>
+        </thead>
+        <tbody id="scoreboardBody">
+          <!-- Injected rows -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="shared/sfx.js"></script>
+  <script src="shared/profile.js"></script>
+  <script>
+    /* ===========================================================
+       CALLBREAK GAME ENGINE
+       =========================================================== */
+    const SUITS = ['S', 'H', 'D', 'C']; // Spades (Trump), Hearts, Diamonds, Clubs
+    const SUIT_ICONS = { S: '♠️', H: '♥️', D: '♦️', C: '♣️' };
+    const VAL_RANKS = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
+    const VAL_NAMES = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+    let currentRound = 1;
+    const TOTAL_ROUNDS = 5;
+    let roundScores = []; // [{ p0, p1, p2, p3 }]
+    
+    // Players order: 0: South (Human), 1: West, 2: North, 3: East
+    let players = [
+      { id: 'p0', seat: 'South', name: 'You', isHuman: true, hand: [], bid: 0, won: 0, totalScore: 0 },
+      { id: 'p1', seat: 'West', name: 'FoxyKing 🦊', isHuman: false, hand: [], bid: 0, won: 0, totalScore: 0 },
+      { id: 'p2', seat: 'North', name: 'RoboAce 🤖', isHuman: false, hand: [], bid: 0, won: 0, totalScore: 0 },
+      { id: 'p3', seat: 'East', name: 'PandaPro 🐼', isHuman: false, hand: [], bid: 0, won: 0, totalScore: 0 }
+    ];
+
+    let currentTurn = 0;
+    let currentTrick = []; // [{ playerIdx, card, seat }]
+    let tricksPlayed = 0;
+    let trickLeader = 0;
+
+    function build52Deck() {
+      const d = [];
+      for (const s of SUITS) {
+        for (const v of VAL_NAMES) {
+          d.push({ suit: s, val: v, rank: VAL_RANKS[v] });
+        }
+      }
+      return shuffle(d);
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function startRound() {
+      document.getElementById('roundIndicator').textContent = `Round ${currentRound} of ${TOTAL_ROUNDS}`;
+      const d = build52Deck();
+      
+      // Deal 13 cards to each player
+      players.forEach(p => {
+        p.hand = [];
+        p.bid = 0;
+        p.won = 0;
+      });
+
+      for (let i = 0; i < 13; i++) {
+        players.forEach(p => p.hand.push(d.pop()));
+      }
+
+      // Sort hands: Spades, Hearts, Diamonds, Clubs; highest rank first
+      players.forEach(p => sortHand(p.hand));
+
+      tricksPlayed = 0;
+      currentTrick = [];
+      clearTrickSlots();
+      SFX.cardDeal();
+      renderAll();
+
+      promptBidding();
+    }
+
+    function sortHand(hand) {
+      const suitOrder = { S: 0, H: 1, D: 2, C: 3 };
+      hand.sort((a, b) => {
+        if (suitOrder[a.suit] !== suitOrder[b.suit]) {
+          return suitOrder[a.suit] - suitOrder[b.suit];
+        }
+        return b.rank - a.rank;
+      });
+    }
+
+    function promptBidding() {
+      document.getElementById('cbStatusBanner').textContent = '♠️ Bidding Phase: Choose your trick bid (1–8)';
+      // Bots auto-calculate their bid based on Aces, Kings, and high Spades
+      for (let i = 1; i < 4; i++) {
+        players[i].bid = calculateBotBid(players[i].hand);
+        document.getElementById(`bid${players[i].seat}`).textContent = `Bid: ${players[i].bid}`;
+      }
+
+      // Show modal for human player
+      const grid = document.getElementById('bidBtnGrid');
+      grid.innerHTML = '';
+      for (let b = 1; b <= 8; b++) {
+        const btn = document.createElement('button');
+        btn.className = 'bid-btn';
+        btn.textContent = b;
+        btn.onclick = () => {
+          SFX.tap();
+          players[0].bid = b;
+          document.getElementById('bidSouth').textContent = `Bid: ${b}`;
+          document.getElementById('bidModal').style.display = 'none';
+          trickLeader = 0;
+          currentTurn = 0;
+          startTrick();
+        };
+        grid.appendChild(btn);
+      }
+      document.getElementById('bidModal').style.display = 'grid';
+    }
+
+    function calculateBotBid(hand) {
+      let count = 0;
+      hand.forEach(c => {
+        if (c.suit === 'S' && c.rank >= 11) count++; // High spade
+        else if (c.rank === 14) count++; // Ace
+        else if (c.rank === 13 && Math.random() > 0.4) count++;
+      });
+      return Math.max(1, Math.min(6, count));
+    }
+
+    function startTrick() {
+      currentTrick = [];
+      clearTrickSlots();
+      currentTurn = trickLeader;
+      nextTrickTurn();
+    }
+
+    function nextTrickTurn() {
+      renderAll();
+      const p = players[currentTurn];
+      updateActiveSeatHighlight();
+
+      if (p.isHuman) {
+        document.getElementById('cbStatusBanner').innerHTML = `🎮 <b>Your turn!</b> Choose a legal card to play.`;
+      } else {
+        document.getElementById('cbStatusBanner').innerHTML = `🤖 <b>${p.name}'s turn...</b>`;
+        setTimeout(botPlayCard, 1000);
+      }
+    }
+
+    // Callbreak Strict Rule Check
+    function isLegalMove(hand, card, trick) {
+      if (trick.length === 0) return true; // Leader can play any card
+
+      const ledSuit = trick[0].card.suit;
+      const hasLedSuit = hand.some(c => c.suit === ledSuit);
+
+      if (hasLedSuit) {
+        // Must follow led suit!
+        if (card.suit !== ledSuit) return false;
+        
+        // Try to beat highest led suit card if possible
+        const highestInLed = Math.max(...trick.filter(t => t.card.suit === ledSuit).map(t => t.card.rank));
+        const hasHigherInLed = hand.some(c => c.suit === ledSuit && c.rank > highestInLed);
+        if (hasHigherInLed && card.rank < highestInLed) {
+          // If you have higher, you should play higher (optional strict rule; enforced for best play)
+        }
+        return true;
+      }
+
+      // Void in led suit: Must play Spade (trump) if possible!
+      const hasSpade = hand.some(c => c.suit === 'S');
+      if (hasSpade) {
+        if (card.suit !== 'S') return false; // Must play spade if void of led suit
+        // Must beat highest spade in trick if possible
+        const highestSpade = Math.max(0, ...trick.filter(t => t.card.suit === 'S').map(t => t.card.rank));
+        const hasHigherSpade = hand.some(c => c.suit === 'S' && c.rank > highestSpade);
+        if (hasHigherSpade && card.rank < highestSpade) {
+          return false;
+        }
+        return true;
+      }
+
+      // No led suit and no spades: Any card can be played (slough)
+      return true;
+    }
+
+    function botPlayCard() {
+      const bot = players[currentTurn];
+      const validCards = bot.hand.filter(c => isLegalMove(bot.hand, c, currentTrick));
+      const chosen = validCards.length ? validCards[0] : bot.hand[0];
+      const idx = bot.hand.indexOf(chosen);
+      bot.hand.splice(idx, 1);
+      executeCardPlay(currentTurn, chosen);
+    }
+
+    function humanPlayCard(cardIdx) {
+      if (currentTurn !== 0) return;
+      const card = players[0].hand[cardIdx];
+      if (!isLegalMove(players[0].hand, card, currentTrick)) {
+        Toast.show('Illegal move! Must follow led suit or trump with Spade.', 'er');
+        SFX.loss();
+        return;
+      }
+      players[0].hand.splice(cardIdx, 1);
+      executeCardPlay(0, card);
+    }
+
+    function executeCardPlay(playerIdx, card) {
+      SFX.cardPlay();
+      const p = players[playerIdx];
+      currentTrick.push({ playerIdx, card, seat: p.seat });
+
+      // Render card in center trick slot
+      const slot = document.getElementById(`trickCard${p.seat}`);
+      slot.innerHTML = renderCardHTML(card);
+
+      if (currentTrick.length === 4) {
+        // Evaluate trick winner after short delay
+        setTimeout(evaluateTrickWinner, 1300);
+      } else {
+        currentTurn = (currentTurn + 1) % 4;
+        setTimeout(nextTrickTurn, 300);
+      }
+    }
+
+    function evaluateTrickWinner() {
+      const ledSuit = currentTrick[0].card.suit;
+      let winningPlay = currentTrick[0];
+
+      for (let i = 1; i < 4; i++) {
+        const play = currentTrick[i];
+        // If current winner is not trump, and this play is trump: this play wins
+        if (winningPlay.card.suit !== 'S' && play.card.suit === 'S') {
+          winningPlay = play;
+        } else if (winningPlay.card.suit === play.card.suit && play.card.rank > winningPlay.card.rank) {
+          winningPlay = play;
+        }
+      }
+
+      const winner = players[winningPlay.playerIdx];
+      winner.won++;
+      SFX.pop();
+      Toast.show(`🏆 ${winner.name} won the trick!`, 'ok');
+
+      trickLeader = winningPlay.playerIdx;
+      tricksPlayed++;
+
+      document.getElementById(`won${winner.seat}`).textContent = winner.won;
+
+      if (tricksPlayed === 13) {
+        setTimeout(finishRound, 1500);
+      } else {
+        setTimeout(startTrick, 1000);
+      }
+    }
+
+    function finishRound() {
+      // Calculate scores
+      const rScore = {};
+      players.forEach(p => {
+        let pts = 0;
+        if (p.won >= p.bid) {
+          pts = p.bid + (p.won - p.bid) * 0.1;
+        } else {
+          pts = -p.bid;
+        }
+        pts = Math.round(pts * 10) / 10;
+        p.totalScore = Math.round((p.totalScore + pts) * 10) / 10;
+        rScore[p.id] = pts;
+      });
+
+      roundScores.push(rScore);
+      updateScoreboardUI();
+      SFX.win();
+
+      if (currentRound >= TOTAL_ROUNDS) {
+        finishGame();
+      } else {
+        Toast.show(`Round ${currentRound} Complete! Next round starting...`, 'ok');
+        currentRound++;
+        setTimeout(startRound, 2500);
+      }
+    }
+
+    function finishGame() {
+      let maxScore = -999, champ = players[0];
+      players.forEach(p => {
+        if (p.totalScore > maxScore) { maxScore = p.totalScore; champ = p; }
+      });
+
+      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+      if (champ.isHuman) {
+        Profile.recordWin('callbreakWins');
+        Toast.show(`👑 CHAMPION! You won Callbreak with ${champ.totalScore} pts! (+500 Coins)`, 'ok');
+      } else {
+        Toast.show(`🏁 Match Ended! ${champ.name} won with ${champ.totalScore} pts!`, 'wa');
+      }
+
+      document.getElementById('scoresModal').style.display = 'grid';
+    }
+
+    function clearTrickSlots() {
+      ['North', 'South', 'East', 'West'].forEach(s => {
+        document.getElementById(`trickCard${s}`).innerHTML = '';
+      });
+    }
+
+    function updateActiveSeatHighlight() {
+      ['North', 'South', 'East', 'West'].forEach(s => {
+        document.getElementById(`seat${s}`).classList.remove('active-turn');
+      });
+      const p = players[currentTurn];
+      document.getElementById(`seat${p.seat}`).classList.add('active-turn');
+    }
+
+    function renderCardHTML(card, isPlayable = false) {
+      const isRed = (card.suit === 'H' || card.suit === 'D');
+      const colClass = isRed ? 'card-red' : 'card-black';
+      const suitIcon = SUIT_ICONS[card.suit];
+      return `
+        <div class="p-card ${colClass} ${isPlayable ? 'playable' : ''}">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="p-card-val">${card.val}</span>
+            <span class="p-card-suit">${suitIcon}</span>
+          </div>
+          <div class="p-card-center">${suitIcon}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; transform:rotate(180deg);">
+            <span class="p-card-val">${card.val}</span>
+            <span class="p-card-suit">${suitIcon}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAll() {
+      const handCont = document.getElementById('humanHandCards');
+      handCont.innerHTML = '';
+      const isMyTurn = (currentTurn === 0);
+
+      players[0].hand.forEach((card, idx) => {
+        const canPlay = isMyTurn && isLegalMove(players[0].hand, card, currentTrick);
+        const cardWrapper = document.createElement('div');
+        cardWrapper.innerHTML = renderCardHTML(card, canPlay);
+        const el = cardWrapper.firstElementChild;
+        if (!canPlay && isMyTurn) el.classList.add('disabled');
+        el.addEventListener('click', () => humanPlayCard(idx));
+        handCont.appendChild(el);
+      });
+    }
+
+    function updateScoreboardUI() {
+      const tbody = document.getElementById('scoreboardBody');
+      tbody.innerHTML = '';
+      roundScores.forEach((r, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>Round ${idx + 1}</td>
+          <td><b>${r.p0}</b></td>
+          <td>${r.p1}</td>
+          <td>${r.p2}</td>
+          <td>${r.p3}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Total row
+      const totalTr = document.createElement('tr');
+      totalTr.style.background = 'rgba(0, 229, 255, 0.15)';
+      totalTr.style.fontWeight = '800';
+      totalTr.innerHTML = `
+        <td>TOTAL</td>
+        <td style="color:var(--yellow-pop);">${players[0].totalScore}</td>
+        <td>${players[1].totalScore}</td>
+        <td>${players[2].totalScore}</td>
+        <td>${players[3].totalScore}</td>
+      `;
+      tbody.appendChild(totalTr);
+    }
+
+    document.getElementById('viewScoresBtn').addEventListener('click', () => {
+      document.getElementById('scoresModal').style.display = 'grid';
+    });
+    document.getElementById('closeScoresBtn').addEventListener('click', () => {
+      document.getElementById('scoresModal').style.display = 'none';
+    });
+
+    window.addEventListener('load', startRound);
+  </script>
+</body>
+</html>

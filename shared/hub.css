@@ -1,0 +1,652 @@
+/* ==========================================================================
+   PARTY ARCADE (FALL GUYS STYLE) GLOBAL DESIGN SYSTEM - HUB.CSS
+   Vibrant, bubbly, tactile, highly polished arcade aesthetic
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&family=Noto+Sans+Devanagari:wght@500;700;800&display=swap');
+
+:root {
+  /* Candy & Neon Palette */
+  --bg-deep: #0e1124;
+  --bg-dark: #141933;
+  --bg-card: #1c2347;
+  --bg-card-hover: #262f5e;
+  --border-card: #2e3a75;
+  --border-candy: rgba(255, 255, 255, 0.16);
+
+  /* Fall Guys Signature Bouncy Colors */
+  --pink-pop: #ff1493;
+  --pink-glow: #ff4db8;
+  --cyan-pop: #00e5ff;
+  --cyan-glow: #6df0ff;
+  --yellow-pop: #ffd000;
+  --yellow-glow: #ffe169;
+  --lime-pop: #00ff88;
+  --lime-glow: #66ffa6;
+  --purple-pop: #8b3dff;
+  --purple-glow: #b27bff;
+  --orange-pop: #ff6b1a;
+
+  /* Text & Surfaces */
+  --text-main: #f5f8ff;
+  --text-sub: #a4b3d6;
+  --text-muted: #6f7f9f;
+  --gold: #ffbe1a;
+
+  /* Card Suits & Colors */
+  --uno-red: #ff3355;
+  --uno-blue: #00aaff;
+  --uno-green: #00d66c;
+  --uno-yellow: #ffcc00;
+
+  /* UI Tokens */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 26px;
+  --radius-pill: 9999px;
+  --shadow-bouncy: 0 8px 0 rgba(0, 0, 0, 0.28), 0 16px 30px rgba(0, 0, 0, 0.35);
+  --shadow-candy-pink: 0 6px 0 #b30062, 0 10px 20px rgba(255, 20, 147, 0.4);
+  --shadow-candy-cyan: 0 6px 0 #0099ab, 0 10px 20px rgba(0, 229, 255, 0.4);
+  --shadow-candy-yellow: 0 6px 0 #b39200, 0 10px 20px rgba(255, 208, 0, 0.4);
+  --shadow-candy-lime: 0 6px 0 #009952, 0 10px 20px rgba(0, 255, 136, 0.4);
+  --shadow-candy-purple: 0 6px 0 #571ab3, 0 10px 20px rgba(139, 61, 255, 0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-deep);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(255, 20, 147, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(0, 229, 255, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(139, 61, 255, 0.1) 0%, transparent 60%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   GLOBAL ARCADE NAVIGATION BAR
+   ========================================================================== */
+.arcade-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(14, 17, 36, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-family: 'Fredoka', cursive;
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--text-main);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-brand:hover {
+  transform: scale(1.05) rotate(-2deg);
+}
+
+.nav-brand-badge {
+  background: linear-gradient(135deg, var(--pink-pop), var(--purple-pop));
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.nav-games-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 4px 0;
+}
+.nav-games-list::-webkit-scrollbar { display: none; }
+
+.nav-game-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-sub);
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid transparent;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+
+.nav-game-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.nav-game-link.active {
+  background: linear-gradient(135deg, var(--cyan-pop), var(--purple-pop));
+  color: #fff;
+  border-color: #fff;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+}
+
+.nav-profile-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 2px solid var(--border-card);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+}
+
+.nav-profile-pill:hover {
+  border-color: var(--yellow-pop);
+  transform: translateY(-2px);
+}
+
+.nav-avatar-circle {
+  font-size: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.nav-coins-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  color: var(--yellow-pop);
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   BUTTONS: BOUNCY CHUNKY "FALL GUYS" STYLE
+   ========================================================================== */
+.candy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 13px 26px;
+  border-radius: var(--radius-pill);
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.candy-btn:active {
+  transform: translateY(4px) !important;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
+}
+
+.btn-pink {
+  background: linear-gradient(180deg, #ff4db8, var(--pink-pop));
+  box-shadow: var(--shadow-candy-pink);
+}
+.btn-pink:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+.btn-cyan {
+  background: linear-gradient(180deg, #6df0ff, var(--cyan-pop));
+  color: #0b2233;
+  box-shadow: var(--shadow-candy-cyan);
+}
+.btn-cyan:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+.btn-yellow {
+  background: linear-gradient(180deg, #ffe169, var(--yellow-pop));
+  color: #3b2c00;
+  box-shadow: var(--shadow-candy-yellow);
+}
+.btn-yellow:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+.btn-lime {
+  background: linear-gradient(180deg, #66ffa6, var(--lime-pop));
+  color: #003318;
+  box-shadow: var(--shadow-candy-lime);
+}
+.btn-lime:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+.btn-purple {
+  background: linear-gradient(180deg, #b27bff, var(--purple-pop));
+  box-shadow: var(--shadow-candy-purple);
+}
+.btn-purple:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   GAME HUB HERO & CARDS
+   ========================================================================== */
+.hub-hero {
+  text-align: center;
+  padding: 50px 20px 30px;
+  position: relative;
+}
+
+.hub-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 20, 147, 0.18);
+  border: 2px solid rgba(255, 20, 147, 0.4);
+  color: #ff85cc;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  animation: pulseBadge 2.5s infinite;
+}
+
+@keyframes pulseBadge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.hub-hero h1 {
+  font-family: 'Fredoka', cursive;
+  font-size: clamp(38px, 6vw, 68px);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--yellow-pop), var(--pink-pop), var(--cyan-pop));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hub-hero p {
+  color: var(--text-sub);
+  font-size: clamp(16px, 2vw, 20px);
+  max-width: 680px;
+  margin: 0 auto 30px;
+}
+
+/* Quick Room Join Bar */
+.quick-join-bar {
+  max-width: 520px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border: 3px solid var(--border-card);
+  border-radius: var(--radius-pill);
+  padding: 6px 8px 6px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-bouncy);
+}
+
+.quick-join-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.quick-join-input::placeholder {
+  color: var(--text-muted);
+  text-transform: none;
+  font-weight: 500;
+}
+
+/* Game Selection Grid */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 26px;
+  max-width: 1240px;
+  margin: 20px auto 60px;
+  padding: 0 20px;
+}
+
+.game-card {
+  background: var(--bg-card);
+  border: 3px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: var(--shadow-bouncy);
+}
+
+.game-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.game-card-bg-glow {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.game-icon-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.game-player-badge {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.game-title {
+  font-family: 'Fredoka', cursive;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.game-desc {
+  color: var(--text-sub);
+  font-size: 15px;
+  line-height: 1.45;
+  margin-bottom: 22px;
+  flex: 1;
+}
+
+.game-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.game-tag {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.game-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Specific Card Themes */
+.card-uno { border-color: rgba(255, 51, 85, 0.4); }
+.card-uno:hover { border-color: var(--uno-red); box-shadow: 0 10px 30px rgba(255, 51, 85, 0.3); }
+.card-uno .game-icon-box { background: linear-gradient(135deg, var(--uno-red), var(--uno-yellow)); }
+
+.card-callbreak { border-color: rgba(0, 229, 255, 0.4); }
+.card-callbreak:hover { border-color: var(--cyan-pop); box-shadow: 0 10px 30px rgba(0, 229, 255, 0.3); }
+.card-callbreak .game-icon-box { background: linear-gradient(135deg, #1b3563, #0a1738); border-color: var(--cyan-pop); }
+
+.card-poker { border-color: rgba(255, 208, 0, 0.4); }
+.card-poker:hover { border-color: var(--yellow-pop); box-shadow: 0 10px 30px rgba(255, 208, 0, 0.3); }
+.card-poker .game-icon-box { background: linear-gradient(135deg, #2b7a3a, #13461c); }
+
+.card-blackjack { border-color: rgba(139, 61, 255, 0.4); }
+.card-blackjack:hover { border-color: var(--purple-pop); box-shadow: 0 10px 30px rgba(139, 61, 255, 0.3); }
+.card-blackjack .game-icon-box { background: linear-gradient(135deg, var(--purple-pop), #42168a); }
+
+.card-connect4 { border-color: rgba(0, 255, 136, 0.4); }
+.card-connect4:hover { border-color: var(--lime-pop); box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3); }
+.card-connect4 .game-icon-box { background: linear-gradient(135deg, #0080ff, #ff0055); }
+
+/* ==========================================================================
+   MODALS (PROFILE & ROOM CREATION)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 24, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-box {
+  background: var(--bg-card);
+  border: 4px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 30px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  position: relative;
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from { transform: scale(0.85) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.modal-close-btn:hover {
+  background: var(--pink-pop);
+  transform: rotate(90deg);
+}
+
+.modal-title {
+  font-family: 'Fredoka', cursive;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Avatar Picker Grid */
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.avatar-choice {
+  font-size: 34px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 3px solid transparent;
+  border-radius: 18px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: grid;
+  place-items: center;
+}
+
+.avatar-choice:hover {
+  transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.avatar-choice.selected {
+  border-color: var(--yellow-pop);
+  background: rgba(255, 208, 0, 0.18);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+  transform: scale(1.1);
+}
+
+.input-group {
+  margin-bottom: 18px;
+}
+.input-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+}
+.form-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus {
+  border-color: var(--cyan-pop);
+}
+
+/* Toasts */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.candy-toast {
+  background: var(--bg-card);
+  border: 3px solid var(--border-card);
+  padding: 12px 24px;
+  border-radius: var(--radius-pill);
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: var(--shadow-bouncy);
+  animation: toastPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@keyframes toastPop {
+  from { transform: translateY(20px) scale(0.9); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.toast-ok { border-color: var(--lime-pop); }
+.toast-er { border-color: var(--pink-pop); }
+.toast-wa { border-color: var(--yellow-pop); }
+.toast-inf { border-color: var(--cyan-pop); }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .arcade-navbar { padding: 8px 12px; }
+  .nav-brand { font-size: 20px; }
+  .hub-hero { padding: 30px 16px 20px; }
+  .games-grid { grid-template-columns: 1fr; gap: 18px; padding: 0 16px; }
+  .game-actions { grid-template-columns: 1fr; }
+}

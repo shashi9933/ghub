@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Blackjack 21 — GameHub Arcade</title>
+  <link rel="stylesheet" href="shared/hub.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    .bj-arena {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 16px;
+    }
+
+    /* Blackjack Felt Table */
+    .bj-table {
+      width: 100%;
+      height: 480px;
+      background: radial-gradient(ellipse at center, #2e1059 0%, #170733 70%, #0c021c 100%);
+      border: 12px solid #3d2314;
+      border-radius: 200px 200px 40px 40px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 30px 20px 20px;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.8), 0 16px 40px rgba(0,0,0,0.5);
+      margin: 10px 0;
+    }
+
+    .dealer-area, .player-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cards-row {
+      display: flex;
+      gap: 10px;
+      min-height: 100px;
+    }
+
+    /* Score Badges */
+    .hand-score-pill {
+      background: rgba(0, 0, 0, 0.75);
+      border: 2px solid var(--purple-pop);
+      padding: 4px 16px;
+      border-radius: var(--radius-pill);
+      font-weight: 900;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    /* French Playing Card */
+    .bj-card {
+      width: 68px;
+      height: 98px;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 5px 6px;
+      user-select: none;
+      font-weight: 800;
+      position: relative;
+      animation: cardDrop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes cardDrop {
+      from { transform: translateY(-30px) scale(0.9); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .card-red { color: #d62828; }
+    .card-black { color: #1e1e24; }
+    .bj-card.card-back {
+      background: #1a1a24;
+      border: 2px solid var(--purple-pop);
+      color: var(--yellow-pop);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+    }
+
+    /* Chip Tray & Controls */
+    .bj-controls-bar {
+      width: 100%;
+      background: rgba(14, 20, 36, 0.9);
+      border: 3px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .chips-tray {
+      display: flex;
+      gap: 12px;
+    }
+    .bet-chip {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 3px dashed #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 13px;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+      transition: all 0.2s;
+    }
+    .bet-chip:hover { transform: translateY(-3px) scale(1.1); }
+    .chip-25 { background: #00aa55; }
+    .chip-50 { background: #0077cc; }
+    .chip-100 { background: #cc0033; }
+    .chip-500 { background: #6600cc; }
+  </style>
+</head>
+<body>
+
+  <!-- GLOBAL ARCADE NAVBAR -->
+  <header class="arcade-navbar">
+    <a href="index.html" class="nav-brand">
+      <span>🎮</span> GameHub
+      <span class="nav-brand-badge" style="background:var(--purple-pop);">Blackjack</span>
+    </a>
+
+    <ul class="nav-games-list">
+      <li><a href="uno.html" class="nav-game-link">🎴 Uno</a></li>
+      <li><a href="callbreak.html" class="nav-game-link">♠️ Callbreak</a></li>
+      <li><a href="poker.html" class="nav-game-link">🃏 Poker</a></li>
+      <li><a href="blackjack.html" class="nav-game-link active">🪙 Blackjack</a></li>
+      <li><a href="connect4.html" class="nav-game-link">🔴 Connect 4</a></li>
+    </ul>
+
+    <div class="nav-profile-pill" id="navProfileBtn">
+      <div class="nav-avatar-circle profile-avatar-display">🦊</div>
+      <span class="profile-name-display">Player</span>
+      <div class="nav-coins-badge">
+        <span>🪙</span>
+        <span class="profile-coins-display">10,000</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="bj-arena">
+
+    <div style="display:flex; justify-content:space-between; width:100%;">
+      <span style="font-weight:800;">Blackjack pays 3 to 2 &bull; Dealer stands on 17</span>
+      <span style="font-weight:800; color:var(--yellow-pop);">Current Bet: 🪙<span id="currentBetDisplay">100</span></span>
+    </div>
+
+    <!-- Blackjack Table -->
+    <div class="bj-table">
+      <!-- Dealer Area -->
+      <div class="dealer-area">
+        <div style="font-weight:700; font-size:14px; color:var(--text-sub);">Dealer Hand</div>
+        <div class="cards-row" id="dealerCards"></div>
+        <div class="hand-score-pill" id="dealerScore">Score: -</div>
+      </div>
+
+      <!-- Center Table Slogan -->
+      <div style="text-align:center; color:rgba(255,255,255,0.15); font-weight:900; letter-spacing:2px; font-size:18px;">
+        BLACKJACK 21
+      </div>
+
+      <!-- Player Area -->
+      <div class="player-area">
+        <div class="hand-score-pill" id="playerScore">Score: -</div>
+        <div class="cards-row" id="playerCards"></div>
+        <div style="font-weight:700; font-size:14px; color:var(--text-sub);">Your Hand</div>
+      </div>
+    </div>
+
+    <!-- Status Message -->
+    <div id="bjStatusBanner" style="font-weight:800; font-size:18px; color:var(--yellow-pop); margin-bottom:8px;">
+      🪙 Place your bet and tap Deal!
+    </div>
+
+    <!-- Action Bar -->
+    <div class="bj-controls-bar">
+      <!-- Chips -->
+      <div class="chips-tray">
+        <div class="bet-chip chip-25" data-val="25">25</div>
+        <div class="bet-chip chip-50" data-val="50">50</div>
+        <div class="bet-chip chip-100" data-val="100">100</div>
+        <div class="bet-chip chip-500" data-val="500">500</div>
+      </div>
+
+      <!-- Buttons -->
+      <div style="display:flex; gap:10px;">
+        <button class="candy-btn btn-yellow" id="dealBtn">Deal Hand</button>
+        <button class="candy-btn btn-cyan" id="hitBtn" style="display:none;">Hit</button>
+        <button class="candy-btn btn-pink" id="standBtn" style="display:none;">Stand</button>
+        <button class="candy-btn btn-purple" id="doubleBtn" style="display:none;">Double</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="shared/sfx.js"></script>
+  <script src="shared/profile.js"></script>
+  <script>
+    /* ===========================================================
+       BLACKJACK 21 GAME ENGINE
+       =========================================================== */
+    const SUITS = ['S', 'H', 'D', 'C'];
+    const SUIT_ICONS = { S: '♠️', H: '♥️', D: '♦️', C: '♣️' };
+    const VAL_NAMES = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+    let deck = [];
+    let playerHand = [];
+    let dealerHand = [];
+    let currentBet = 100;
+    let gameOver = true;
+
+    function buildDeck() {
+      const d = [];
+      for (const s of SUITS) {
+        for (const v of VAL_NAMES) {
+          d.push({ suit: s, val: v });
+        }
+      }
+      return shuffle(d);
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function calculateScore(hand) {
+      let score = 0;
+      let aces = 0;
+      hand.forEach(c => {
+        if (c.val === 'A') {
+          aces++;
+          score += 11;
+        } else if (['K', 'Q', 'J', '10'].includes(c.val)) {
+          score += 10;
+        } else {
+          score += parseInt(c.val);
+        }
+      });
+      while (score > 21 && aces > 0) {
+        score -= 10;
+        aces--;
+      }
+      return score;
+    }
+
+    function renderCard(c, hidden = false) {
+      if (hidden) {
+        return `<div class="bj-card card-back">21</div>`;
+      }
+      const isRed = (c.suit === 'H' || c.suit === 'D');
+      return `
+        <div class="bj-card ${isRed ? 'card-red' : 'card-black'}">
+          <div style="font-size:12px;">${c.val} ${SUIT_ICONS[c.suit]}</div>
+          <div style="font-size:24px; text-align:center;">${SUIT_ICONS[c.suit]}</div>
+          <div style="font-size:12px; text-align:right;">${c.val}</div>
+        </div>
+      `;
+    }
+
+    function renderAll(hideDealerHole = true) {
+      const pRow = document.getElementById('playerCards');
+      pRow.innerHTML = playerHand.map(c => renderCard(c)).join('');
+      const pScore = calculateScore(playerHand);
+      document.getElementById('playerScore').textContent = `Score: ${pScore}`;
+
+      const dRow = document.getElementById('dealerCards');
+      if (hideDealerHole && dealerHand.length === 2) {
+        dRow.innerHTML = renderCard(dealerHand[0]) + renderCard(dealerHand[1], true);
+        document.getElementById('dealerScore').textContent = `Score: ?`;
+      } else {
+        dRow.innerHTML = dealerHand.map(c => renderCard(c)).join('');
+        document.getElementById('dealerScore').textContent = `Score: ${calculateScore(dealerHand)}`;
+      }
+    }
+
+    function startDeal() {
+      if (deck.length < 15) deck = buildDeck();
+      playerHand = [deck.pop(), deck.pop()];
+      dealerHand = [deck.pop(), deck.pop()];
+      gameOver = false;
+      SFX.cardDeal();
+
+      document.getElementById('dealBtn').style.display = 'none';
+      document.getElementById('hitBtn').style.display = 'inline-flex';
+      document.getElementById('standBtn').style.display = 'inline-flex';
+      document.getElementById('doubleBtn').style.display = 'inline-flex';
+
+      renderAll(true);
+
+      // Check for instant Player Blackjack
+      if (calculateScore(playerHand) === 21) {
+        endRound('blackjack');
+      } else {
+        document.getElementById('bjStatusBanner').textContent = 'Hit or Stand?';
+      }
+    }
+
+    function hit() {
+      if (gameOver) return;
+      document.getElementById('doubleBtn').style.display = 'none';
+      playerHand.push(deck.pop());
+      SFX.cardDeal();
+      renderAll(true);
+
+      const score = calculateScore(playerHand);
+      if (score > 21) {
+        endRound('bust');
+      } else if (score === 21) {
+        stand();
+      }
+    }
+
+    function doubleDown() {
+      if (gameOver) return;
+      currentBet *= 2;
+      document.getElementById('currentBetDisplay').textContent = currentBet;
+      hit();
+      if (!gameOver) stand();
+    }
+
+    function stand() {
+      if (gameOver) return;
+      gameOver = true;
+      document.getElementById('hitBtn').style.display = 'none';
+      document.getElementById('standBtn').style.display = 'none';
+      document.getElementById('doubleBtn').style.display = 'none';
+
+      // Reveal dealer hole card and draw until >= 17
+      renderAll(false);
+      dealerStep();
+    }
+
+    function dealerStep() {
+      const dScore = calculateScore(dealerHand);
+      if (dScore < 17) {
+        setTimeout(() => {
+          dealerHand.push(deck.pop());
+          SFX.cardDeal();
+          renderAll(false);
+          dealerStep();
+        }, 800);
+      } else {
+        evaluateWinner();
+      }
+    }
+
+    function evaluateWinner() {
+      const pScore = calculateScore(playerHand);
+      const dScore = calculateScore(dealerHand);
+
+      if (dScore > 21) {
+        endRound('dealerBust');
+      } else if (pScore > dScore) {
+        endRound('win');
+      } else if (pScore === dScore) {
+        endRound('push');
+      } else {
+        endRound('loss');
+      }
+    }
+
+    function endRound(reason) {
+      gameOver = true;
+      renderAll(false);
+      document.getElementById('dealBtn').style.display = 'inline-flex';
+      document.getElementById('hitBtn').style.display = 'none';
+      document.getElementById('standBtn').style.display = 'none';
+      document.getElementById('doubleBtn').style.display = 'none';
+
+      const banner = document.getElementById('bjStatusBanner');
+      if (reason === 'blackjack') {
+        SFX.win();
+        confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+        Profile.recordWin('blackjackWins');
+        const payout = Math.floor(currentBet * 1.5);
+        Profile.addCoins(payout);
+        banner.textContent = `💥 BLACKJACK! You won 🪙${payout}!`;
+      } else if (reason === 'win' || reason === 'dealerBust') {
+        SFX.win();
+        Profile.recordWin('blackjackWins');
+        Profile.addCoins(currentBet);
+        banner.textContent = (reason === 'dealerBust') ? `🎉 Dealer BUST! You won 🪙${currentBet}!` : `🎉 You WIN! Payout 🪙${currentBet}!`;
+      } else if (reason === 'push') {
+        banner.textContent = '🤝 PUSH! Bets returned.';
+      } else {
+        SFX.loss();
+        Profile.addCoins(-currentBet);
+        banner.textContent = (reason === 'bust') ? '💥 BUST! You went over 21.' : '🏁 Dealer wins.';
+      }
+    }
+
+    // Chip clickers
+    document.querySelectorAll('.bet-chip').forEach(c => {
+      c.addEventListener('click', () => {
+        if (!gameOver) return;
+        SFX.chip();
+        currentBet = parseInt(c.dataset.val);
+        document.getElementById('currentBetDisplay').textContent = currentBet;
+        Toast.show(`Bet set to 🪙${currentBet}`, 'ok');
+      });
+    });
+
+    document.getElementById('dealBtn').addEventListener('click', startDeal);
+    document.getElementById('hitBtn').addEventListener('click', hit);
+    document.getElementById('standBtn').addEventListener('click', stand);
+    document.getElementById('doubleBtn').addEventListener('click', doubleDown);
+
+    window.addEventListener('load', () => {
+      deck = buildDeck();
+    });
+  </script>
+</body>
+</html>

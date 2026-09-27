@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Connect 4 — GameHub Arcade</title>
+  <link rel="stylesheet" href="shared/hub.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    .c4-arena {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 16px;
+    }
+
+    /* Connect 4 Board */
+    .c4-board-container {
+      background: linear-gradient(180deg, #0059b3, #003366);
+      border: 8px solid #002244;
+      border-radius: 28px;
+      padding: 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6), inset 0 4px 10px rgba(255,255,255,0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    /* Column Hover Drop Indicators */
+    .c4-columns-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    .col-drop-zone {
+      height: 40px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: background 0.2s;
+    }
+    .col-drop-zone:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .col-drop-arrow {
+      font-size: 22px;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: all 0.2s;
+    }
+    .col-drop-zone:hover .col-drop-arrow {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .c4-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: 12px;
+    }
+
+    .c4-cell {
+      width: clamp(38px, 9vw, 68px);
+      height: clamp(38px, 9vw, 68px);
+      background: var(--bg-deep);
+      border-radius: 50%;
+      box-shadow: inset 0 6px 10px rgba(0,0,0,0.8);
+      position: relative;
+      cursor: pointer;
+    }
+
+    .c4-disc {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      animation: dropAnim 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes dropAnim {
+      from { transform: translateY(-300px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .disc-red {
+      background: radial-gradient(circle at 35% 35%, #ff4d6d, #d90429);
+      box-shadow: 0 4px 0 #8d0801, inset 0 2px 4px rgba(255,255,255,0.4);
+    }
+    .disc-yellow {
+      background: radial-gradient(circle at 35% 35%, #ffea00, #ffaa00);
+      box-shadow: 0 4px 0 #cc8800, inset 0 2px 4px rgba(255,255,255,0.4);
+    }
+    .disc-win {
+      animation: winGlow 1s infinite alternate;
+      border: 3px solid #fff;
+    }
+    @keyframes winGlow {
+      from { transform: scale(1); filter: brightness(1); }
+      to { transform: scale(1.1); filter: brightness(1.4); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GLOBAL ARCADE NAVBAR -->
+  <header class="arcade-navbar">
+    <a href="index.html" class="nav-brand">
+      <span>🎮</span> GameHub
+      <span class="nav-brand-badge" style="background:var(--lime-pop); color:#003318;">Connect 4</span>
+    </a>
+
+    <ul class="nav-games-list">
+      <li><a href="uno.html" class="nav-game-link">🎴 Uno</a></li>
+      <li><a href="callbreak.html" class="nav-game-link">♠️ Callbreak</a></li>
+      <li><a href="poker.html" class="nav-game-link">🃏 Poker</a></li>
+      <li><a href="blackjack.html" class="nav-game-link">🪙 Blackjack</a></li>
+      <li><a href="connect4.html" class="nav-game-link active">🔴 Connect 4</a></li>
+    </ul>
+
+    <div class="nav-profile-pill" id="navProfileBtn">
+      <div class="nav-avatar-circle profile-avatar-display">🦊</div>
+      <span class="profile-name-display">Player</span>
+      <div class="nav-coins-badge">
+        <span>🪙</span>
+        <span class="profile-coins-display">10,000</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="c4-arena">
+
+    <!-- Top Status & Game Mode Switcher -->
+    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+      <span style="font-weight:800; font-size:16px;">Connect 4 in a row to win!</span>
+      <div style="display:flex; gap:8px;">
+        <button class="candy-btn btn-ghost" id="modeAiBtn" style="padding:6px 14px; font-size:12px;">🤖 vs AI</button>
+        <button class="candy-btn btn-ghost" id="modePvpBtn" style="padding:6px 14px; font-size:12px;">👥 2 Players</button>
+      </div>
+    </div>
+
+    <!-- Active Turn Pill -->
+    <div id="c4StatusBanner" style="font-weight:800; font-size:18px; color:var(--lime-pop); margin: 8px 0;">
+      🔴 Player 1 (Red) Turn! Tap any column.
+    </div>
+
+    <!-- Connect 4 Board Container -->
+    <div class="c4-board-container">
+      <!-- Top Drop Clickable Zones -->
+      <div class="c4-columns-row">
+        <div class="col-drop-zone" data-col="0"><span class="col-drop-arrow">⬇️</span></div>
+        <div class="col-drop-zone" data-col="1"><span class="col-drop-arrow">⬇️</span></div>
+        <div class="col-drop-zone" data-col="2"><span class="col-drop-arrow">⬇️</span></div>
+        <div class="col-drop-zone" data-col="3"><span class="col-drop-arrow">⬇️</span></div>
+        <div class="col-drop-zone" data-col="4"><span class="col-drop-arrow">⬇️</span></div>
+        <div class="col-drop-zone" data-col="5"><span class="col-drop-arrow">⬇️</span></div>
+        <div class="col-drop-zone" data-col="6"><span class="col-drop-arrow">⬇️</span></div>
+      </div>
+
+      <!-- 7x6 Hole Grid -->
+      <div class="c4-grid" id="c4Grid">
+        <!-- 42 cells injected dynamically -->
+      </div>
+    </div>
+
+    <!-- Reset / New Match -->
+    <div style="margin-top:16px;">
+      <button class="candy-btn btn-lime" id="resetBtn">🔄 New Match</button>
+    </div>
+
+  </main>
+
+  <script src="shared/sfx.js"></script>
+  <script src="shared/profile.js"></script>
+  <script>
+    /* ===========================================================
+       CONNECT 4 GAME ENGINE WITH MINIMAX AI
+       =========================================================== */
+    const ROWS = 6;
+    const COLS = 7;
+    let board = [];
+    let curPlayer = 1; // 1 = Red (Human), 2 = Yellow (AI / P2)
+    let isAiMode = true;
+    let isGameOver = false;
+
+    function initBoard() {
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+      curPlayer = 1;
+      isGameOver = false;
+      renderGrid();
+      updateBanner();
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('c4Grid');
+      grid.innerHTML = '';
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'c4-cell';
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          if (board[r][c] === 1) {
+            cell.innerHTML = '<div class="c4-disc disc-red"></div>';
+          } else if (board[r][c] === 2) {
+            cell.innerHTML = '<div class="c4-disc disc-yellow"></div>';
+          }
+          cell.addEventListener('click', () => handleColumnClick(c));
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    function handleColumnClick(col) {
+      if (isGameOver) return;
+      if (isAiMode && curPlayer === 2) return;
+
+      if (!dropDisc(col, curPlayer)) {
+        Toast.show('Column is full! Choose another column.', 'wa');
+        return;
+      }
+
+      SFX.drop();
+      renderGrid();
+
+      const winLine = checkWin(board, curPlayer);
+      if (winLine) {
+        handleWin(curPlayer, winLine);
+        return;
+      }
+
+      if (isBoardFull()) {
+        isGameOver = true;
+        document.getElementById('c4StatusBanner').textContent = '🤝 Game ended in a DRAW!';
+        return;
+      }
+
+      curPlayer = (curPlayer === 1) ? 2 : 1;
+      updateBanner();
+
+      if (isAiMode && curPlayer === 2) {
+        setTimeout(aiMove, 600);
+      }
+    }
+
+    function dropDisc(col, player) {
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (board[r][col] === 0) {
+          board[r][col] = player;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function isBoardFull() {
+      return board[0].every(c => c !== 0);
+    }
+
+    function checkWin(b, player) {
+      // Horizontal
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c <= COLS - 4; c++) {
+          if (b[r][c] === player && b[r][c+1] === player && b[r][c+2] === player && b[r][c+3] === player) {
+            return [{r,c}, {r,c:c+1}, {r,c:c+2}, {r,c:c+3}];
+          }
+        }
+      }
+      // Vertical
+      for (let c = 0; c < COLS; c++) {
+        for (let r = 0; r <= ROWS - 4; r++) {
+          if (b[r][c] === player && b[r+1][c] === player && b[r+2][c] === player && b[r+3][c] === player) {
+            return [{r,c}, {r:r+1,c}, {r:r+2,c}, {r:r+3,c}];
+          }
+        }
+      }
+      // Diagonal (Down-Right)
+      for (let r = 0; r <= ROWS - 4; r++) {
+        for (let c = 0; c <= COLS - 4; c++) {
+          if (b[r][c] === player && b[r+1][c+1] === player && b[r+2][c+2] === player && b[r+3][c+3] === player) {
+            return [{r,c}, {r:r+1,c:c+1}, {r:r+2,c:c+2}, {r:r+3,c:c+3}];
+          }
+        }
+      }
+      // Diagonal (Up-Right)
+      for (let r = 3; r < ROWS; r++) {
+        for (let c = 0; c <= COLS - 4; c++) {
+          if (b[r][c] === player && b[r-1][c+1] === player && b[r-2][c+2] === player && b[r-3][c+3] === player) {
+            return [{r,c}, {r:r-1,c:c+1}, {r:r-2,c:c+2}, {r:r-3,c:c+3}];
+          }
+        }
+      }
+      return null;
+    }
+
+    function aiMove() {
+      if (isGameOver) return;
+      // 1. Check if AI can win in one move
+      for (let c = 0; c < COLS; c++) {
+        const temp = board.map(row => [...row]);
+        if (dropDiscTemp(temp, c, 2)) {
+          if (checkWin(temp, 2)) {
+            executeCol(c);
+            return;
+          }
+        }
+      }
+      // 2. Block player if player is about to win
+      for (let c = 0; c < COLS; c++) {
+        const temp = board.map(row => [...row]);
+        if (dropDiscTemp(temp, c, 1)) {
+          if (checkWin(temp, 1)) {
+            executeCol(c);
+            return;
+          }
+        }
+      }
+      // 3. Prefer center columns
+      const prefCols = [3, 2, 4, 1, 5, 0, 6];
+      for (const c of prefCols) {
+        if (board[0][c] === 0) {
+          executeCol(c);
+          return;
+        }
+      }
+    }
+
+    function dropDiscTemp(b, col, player) {
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (b[r][col] === 0) {
+          b[r][col] = player;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function executeCol(c) {
+      dropDisc(c, 2);
+      SFX.drop();
+      renderGrid();
+
+      const winLine = checkWin(board, 2);
+      if (winLine) {
+        handleWin(2, winLine);
+        return;
+      }
+
+      curPlayer = 1;
+      updateBanner();
+    }
+
+    function handleWin(winner, line) {
+      isGameOver = true;
+      SFX.win();
+      confetti({ particleCount: 130, spread: 75, origin: { y: 0.6 } });
+
+      // Highlight winning discs
+      line.forEach(({r, c}) => {
+        const cell = document.querySelector(`.c4-cell[data-r="${r}"][data-c="${c}"] .c4-disc`);
+        if (cell) cell.classList.add('disc-win');
+      });
+
+      const banner = document.getElementById('c4StatusBanner');
+      if (winner === 1) {
+        Profile.recordWin('connect4Wins');
+        banner.innerHTML = '🎉 <b>VICTORY! You connected 4! (+500 Coins)</b>';
+        Toast.show('🏆 Connect 4 Victory!', 'ok');
+      } else {
+        banner.innerHTML = isAiMode ? '🤖 AI won the match!' : '🟡 Player 2 won!';
+      }
+    }
+
+    function updateBanner() {
+      const banner = document.getElementById('c4StatusBanner');
+      if (curPlayer === 1) {
+        banner.innerHTML = '🔴 <b>Player 1 (Red) Turn!</b> Tap any column.';
+        banner.style.color = 'var(--uno-red)';
+      } else {
+        banner.innerHTML = isAiMode ? '🤖 <b>AI is calculating move...</b>' : '🟡 <b>Player 2 (Yellow) Turn!</b>';
+        banner.style.color = 'var(--yellow-pop)';
+      }
+    }
+
+    // Drop Zone Clickers
+    document.querySelectorAll('.col-drop-zone').forEach(z => {
+      z.addEventListener('click', () => {
+        handleColumnClick(parseInt(z.dataset.col));
+      });
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      SFX.tap();
+      initBoard();
+    });
+
+    document.getElementById('modeAiBtn').addEventListener('click', () => {
+      isAiMode = true;
+      document.getElementById('modeAiBtn').classList.add('btn-lime');
+      document.getElementById('modePvpBtn').classList.remove('btn-lime');
+      initBoard();
+    });
+
+    document.getElementById('modePvpBtn').addEventListener('click', () => {
+      isAiMode = false;
+      document.getElementById('modePvpBtn').classList.add('btn-lime');
+      document.getElementById('modeAiBtn').classList.remove('btn-lime');
+      initBoard();
+    });
+
+    window.addEventListener('load', () => {
+      document.getElementById('modeAiBtn').classList.add('btn-lime');
+      initBoard();
+    });
+  </script>
+</body>
+</html>

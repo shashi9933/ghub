@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Texas Hold'em Poker — GameHub Arcade</title>
+  <link rel="stylesheet" href="shared/hub.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    .poker-arena {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 16px;
+    }
+
+    /* Oval Poker Table */
+    .poker-table {
+      width: 100%;
+      height: 480px;
+      background: radial-gradient(ellipse at center, #1b5e20 0%, #0d3813 65%, #051c08 100%);
+      border: 14px solid #3d2314;
+      border-radius: 200px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.8), 0 16px 40px rgba(0,0,0,0.6);
+      margin: 10px 0;
+    }
+
+    /* Community Cards Area */
+    .comm-cards-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .pot-badge {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid var(--yellow-pop);
+      padding: 6px 18px;
+      border-radius: var(--radius-pill);
+      font-weight: 900;
+      color: var(--yellow-pop);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    /* Poker Seats around table */
+    .poker-seat {
+      position: absolute;
+      background: rgba(14, 20, 36, 0.88);
+      border: 3px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      transition: all 0.3s;
+      min-width: 110px;
+    }
+    .poker-seat.active-turn {
+      border-color: var(--yellow-pop);
+      background: rgba(255, 208, 0, 0.15);
+      box-shadow: 0 0 20px rgba(255, 208, 0, 0.5);
+      transform: scale(1.08);
+    }
+    .poker-seat.folded {
+      opacity: 0.45;
+      filter: grayscale(0.8);
+    }
+
+    .seat-p0 { bottom: 12px; }
+    .seat-p1 { left: 16px; top: 40%; transform: translateY(-50%); }
+    .seat-p2 { top: 12px; left: 30%; }
+    .seat-p3 { top: 12px; right: 30%; }
+    .seat-p4 { right: 16px; top: 40%; transform: translateY(-50%); }
+
+    /* French Playing Card Style */
+    .poker-card {
+      width: 64px;
+      height: 92px;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 4px 6px;
+      user-select: none;
+      font-weight: 800;
+      position: relative;
+    }
+    .poker-card.card-back {
+      background: #1a1a24;
+      border: 2px solid var(--pink-pop);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--yellow-pop);
+      font-size: 13px;
+    }
+
+    .card-red { color: #d62828; }
+    .card-black { color: #1e1e24; }
+
+    /* Player Action Bar */
+    .poker-action-bar {
+      width: 100%;
+      background: rgba(14, 20, 36, 0.9);
+      border: 3px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .bet-slider-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .bet-slider {
+      accent-color: var(--yellow-pop);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GLOBAL ARCADE NAVBAR -->
+  <header class="arcade-navbar">
+    <a href="index.html" class="nav-brand">
+      <span>🎮</span> GameHub
+      <span class="nav-brand-badge" style="background:var(--yellow-pop); color:#3b2c00;">Poker</span>
+    </a>
+
+    <ul class="nav-games-list">
+      <li><a href="uno.html" class="nav-game-link">🎴 Uno</a></li>
+      <li><a href="callbreak.html" class="nav-game-link">♠️ Callbreak</a></li>
+      <li><a href="poker.html" class="nav-game-link active">🃏 Poker</a></li>
+      <li><a href="blackjack.html" class="nav-game-link">🪙 Blackjack</a></li>
+      <li><a href="connect4.html" class="nav-game-link">🔴 Connect 4</a></li>
+    </ul>
+
+    <div class="nav-profile-pill" id="navProfileBtn">
+      <div class="nav-avatar-circle profile-avatar-display">🦊</div>
+      <span class="profile-name-display">Player</span>
+      <div class="nav-coins-badge">
+        <span>🪙</span>
+        <span class="profile-coins-display">10,000</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="poker-arena">
+
+    <!-- Top Info -->
+    <div style="display:flex; justify-content:space-between; width:100%;">
+      <span style="font-weight:800; font-size:16px;">Texas Hold'em No-Limit &bull; Blinds: 25 / 50</span>
+      <span id="handRankDisplay" style="color:var(--yellow-pop); font-weight:800;">Hand: Analyzing...</span>
+    </div>
+
+    <!-- Green Felt Table -->
+    <div class="poker-table">
+      <!-- Seat 1 (West Bot) -->
+      <div class="poker-seat seat-p1" id="seat1">
+        <span style="font-size:24px;">🦊</span>
+        <span style="font-size:12px; font-weight:700;">BluffFox</span>
+        <span style="font-size:11px; color:var(--yellow-pop); font-weight:800;">🪙 <span id="chips1">2,000</span></span>
+        <span style="font-size:11px; color:var(--text-muted);" id="act1">-</span>
+      </div>
+
+      <!-- Seat 2 (NorthWest Bot) -->
+      <div class="poker-seat seat-p2" id="seat2">
+        <span style="font-size:24px;">🤖</span>
+        <span style="font-size:12px; font-weight:700;">RoboChip</span>
+        <span style="font-size:11px; color:var(--yellow-pop); font-weight:800;">🪙 <span id="chips2">2,000</span></span>
+        <span style="font-size:11px; color:var(--text-muted);" id="act2">-</span>
+      </div>
+
+      <!-- Seat 3 (NorthEast Bot) -->
+      <div class="poker-seat seat-p3" id="seat3">
+        <span style="font-size:24px;">🐼</span>
+        <span style="font-size:12px; font-weight:700;">AllInPanda</span>
+        <span style="font-size:11px; color:var(--yellow-pop); font-weight:800;">🪙 <span id="chips3">2,000</span></span>
+        <span style="font-size:11px; color:var(--text-muted);" id="act3">-</span>
+      </div>
+
+      <!-- Seat 4 (East Bot) -->
+      <div class="poker-seat seat-p4" id="seat4">
+        <span style="font-size:24px;">🦁</span>
+        <span style="font-size:12px; font-weight:700;">LionHeart</span>
+        <span style="font-size:11px; color:var(--yellow-pop); font-weight:800;">🪙 <span id="chips4">2,000</span></span>
+        <span style="font-size:11px; color:var(--text-muted);" id="act4">-</span>
+      </div>
+
+      <!-- Seat 0 (You - South) -->
+      <div class="poker-seat seat-p0" id="seat0">
+        <span style="font-size:24px;" class="profile-avatar-display">🦊</span>
+        <span style="font-size:12px; font-weight:700;" class="profile-name-display">You</span>
+        <span style="font-size:11px; color:var(--yellow-pop); font-weight:800;">🪙 <span id="chips0">2,000</span></span>
+        <span style="font-size:11px; color:var(--text-muted);" id="act0">-</span>
+      </div>
+
+      <!-- Center Pot and Community Cards -->
+      <div class="pot-badge">
+        <span>POT:</span>
+        <span id="potAmount">🪙 0</span>
+      </div>
+
+      <div class="comm-cards-area" id="commCardsArea">
+        <!-- 5 Community Cards injected here -->
+      </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div id="pokerStatusBanner" style="font-weight:800; font-size:17px; color:var(--yellow-pop); margin-bottom:8px;">
+      🃏 Deal starting...
+    </div>
+
+    <!-- Player Action Bar & Hole Cards -->
+    <div class="poker-action-bar">
+      <!-- Your 2 Hole Cards -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-weight:800; font-size:14px; margin-right:4px;">Your Cards:</span>
+        <div id="holeCards" style="display:flex; gap:8px;"></div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;" id="actionBtnGroup">
+        <button class="candy-btn btn-pink" id="foldBtn" style="padding:10px 20px; font-size:14px;">Fold</button>
+        <button class="candy-btn btn-cyan" id="checkCallBtn" style="padding:10px 20px; font-size:14px;">Check</button>
+        
+        <div class="bet-slider-group">
+          <input type="range" class="bet-slider" id="betSlider" min="50" max="1000" step="25" value="100" />
+          <button class="candy-btn btn-yellow" id="raiseBtn" style="padding:10px 22px; font-size:14px;">Raise 🪙<span id="betDisplay">100</span></button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="shared/sfx.js"></script>
+  <script src="shared/profile.js"></script>
+  <script>
+    /* ===========================================================
+       TEXAS HOLD'EM POKER ENGINE
+       =========================================================== */
+    const SUITS = ['S', 'H', 'D', 'C'];
+    const SUIT_ICONS = { S: '♠️', H: '♥️', D: '♦️', C: '♣️' };
+    const VAL_RANKS = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
+    const VAL_NAMES = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+    let deck = [];
+    let pot = 0;
+    let currentBet = 0;
+    let stage = 'preflop'; // preflop, flop, turn, river, showdown
+    let communityCards = [];
+    let turnIndex = 0;
+
+    let players = [
+      { id: 'p0', name: 'You', chips: 2000, currentBet: 0, folded: false, hole: [], isHuman: true },
+      { id: 'p1', name: 'BluffFox', chips: 2000, currentBet: 0, folded: false, hole: [], isHuman: false },
+      { id: 'p2', name: 'RoboChip', chips: 2000, currentBet: 0, folded: false, hole: [], isHuman: false },
+      { id: 'p3', name: 'AllInPanda', chips: 2000, currentBet: 0, folded: false, hole: [], isHuman: false },
+      { id: 'p4', name: 'LionHeart', chips: 2000, currentBet: 0, folded: false, hole: [], isHuman: false }
+    ];
+
+    function buildDeck() {
+      const d = [];
+      for (const s of SUITS) {
+        for (const v of VAL_NAMES) {
+          d.push({ suit: s, val: v, rank: VAL_RANKS[v] });
+        }
+      }
+      return shuffle(d);
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function startNewHand() {
+      deck = buildDeck();
+      pot = 0;
+      currentBet = 50; // Big blind
+      communityCards = [];
+      stage = 'preflop';
+
+      players.forEach(p => {
+        p.hole = [deck.pop(), deck.pop()];
+        p.folded = false;
+        p.currentBet = 0;
+      });
+
+      // Post blinds (p1 small blind 25, p2 big blind 50)
+      players[1].chips -= 25; players[1].currentBet = 25; pot += 25;
+      players[2].chips -= 50; players[2].currentBet = 50; pot += 50;
+
+      SFX.cardDeal();
+      renderAll();
+      turnIndex = 0; // Action starts on player
+      promptPlayerTurn();
+    }
+
+    function renderCard(c) {
+      const isRed = (c.suit === 'H' || c.suit === 'D');
+      return `
+        <div class="poker-card ${isRed ? 'card-red' : 'card-black'}">
+          <div style="font-size:12px;">${c.val} ${SUIT_ICONS[c.suit]}</div>
+          <div style="font-size:22px; text-align:center;">${SUIT_ICONS[c.suit]}</div>
+          <div style="font-size:12px; text-align:right;">${c.val}</div>
+        </div>
+      `;
+    }
+
+    function renderAll() {
+      document.getElementById('potAmount').textContent = `🪙 ${pot}`;
+      
+      // Update seats
+      players.forEach((p, idx) => {
+        document.getElementById(`chips${idx}`).textContent = p.chips.toLocaleString();
+        const seat = document.getElementById(`seat${idx}`);
+        if (p.folded) seat.classList.add('folded');
+        else seat.classList.remove('folded');
+      });
+
+      // Update Hole Cards
+      const holeArea = document.getElementById('holeCards');
+      holeArea.innerHTML = players[0].hole.map(renderCard).join('');
+
+      // Update Community Cards
+      const commArea = document.getElementById('commCardsArea');
+      commArea.innerHTML = communityCards.map(renderCard).join('');
+      // Placeholders for remaining community cards
+      for (let i = communityCards.length; i < 5; i++) {
+        commArea.innerHTML += `<div class="poker-card card-back">POKER</div>`;
+      }
+
+      // Update Hand Rank
+      evaluateHandStrength();
+    }
+
+    function evaluateHandStrength() {
+      const allSeven = [...players[0].hole, ...communityCards];
+      if (allSeven.length < 2) return;
+      // Simple rank evaluation
+      const suitsCount = {};
+      const rankCount = {};
+      allSeven.forEach(c => {
+        suitsCount[c.suit] = (suitsCount[c.suit] || 0) + 1;
+        rankCount[c.rank] = (rankCount[c.rank] || 0) + 1;
+      });
+
+      let rankStr = 'High Card';
+      const maxRankCount = Math.max(...Object.values(rankCount));
+      const pairs = Object.values(rankCount).filter(v => v === 2).length;
+
+      if (Object.values(suitsCount).some(c => c >= 5)) rankStr = 'Flush! 🌊';
+      else if (maxRankCount === 4) rankStr = 'Four of a Kind! 💥';
+      else if (maxRankCount === 3 && pairs >= 1) rankStr = 'Full House! 🏠';
+      else if (maxRankCount === 3) rankStr = 'Three of a Kind! ✨';
+      else if (pairs >= 2) rankStr = 'Two Pair! ✌️';
+      else if (pairs === 1) rankStr = 'One Pair! 🎯';
+
+      document.getElementById('handRankDisplay').textContent = `Hand: ${rankStr}`;
+    }
+
+    function promptPlayerTurn() {
+      const p = players[turnIndex];
+      ['seat0', 'seat1', 'seat2', 'seat3', 'seat4'].forEach(s => document.getElementById(s).classList.remove('active-turn'));
+      document.getElementById(`seat${turnIndex}`).classList.add('active-turn');
+
+      if (p.folded) {
+        advanceTurn();
+        return;
+      }
+
+      if (p.isHuman) {
+        document.getElementById('pokerStatusBanner').textContent = '🃏 Your turn to act!';
+        const toCall = currentBet - p.currentBet;
+        const callBtn = document.getElementById('checkCallBtn');
+        callBtn.textContent = toCall > 0 ? `Call 🪙${toCall}` : 'Check';
+        document.getElementById('actionBtnGroup').style.pointerEvents = 'auto';
+      } else {
+        document.getElementById('pokerStatusBanner').textContent = `🤖 ${p.name}'s turn...`;
+        document.getElementById('actionBtnGroup').style.pointerEvents = 'none';
+        setTimeout(botAction, 1000);
+      }
+    }
+
+    function botAction() {
+      const bot = players[turnIndex];
+      const toCall = currentBet - bot.currentBet;
+
+      // Simple AI logic
+      if (toCall === 0) {
+        recordAction(turnIndex, 'Check');
+      } else if (toCall > 400 && Math.random() < 0.4) {
+        bot.folded = true;
+        recordAction(turnIndex, 'Fold');
+      } else {
+        bot.chips -= toCall;
+        bot.currentBet += toCall;
+        pot += toCall;
+        recordAction(turnIndex, `Call 🪙${toCall}`);
+      }
+      advanceTurn();
+    }
+
+    function recordAction(idx, text) {
+      SFX.chip();
+      document.getElementById(`act${idx}`).textContent = text;
+      renderAll();
+    }
+
+    function advanceTurn() {
+      turnIndex++;
+      if (turnIndex >= players.length) {
+        // Betting round complete! Proceed to next stage
+        setTimeout(nextStage, 1000);
+      } else {
+        setTimeout(promptPlayerTurn, 400);
+      }
+    }
+
+    function nextStage() {
+      currentBet = 0;
+      players.forEach(p => p.currentBet = 0);
+
+      if (stage === 'preflop') {
+        stage = 'flop';
+        communityCards = [deck.pop(), deck.pop(), deck.pop()];
+        SFX.cardDeal();
+        Toast.show('🌊 The Flop is dealt!', 'ok');
+      } else if (stage === 'flop') {
+        stage = 'turn';
+        communityCards.push(deck.pop());
+        SFX.cardDeal();
+        Toast.show('⚡ The Turn is dealt!', 'ok');
+      } else if (stage === 'turn') {
+        stage = 'river';
+        communityCards.push(deck.pop());
+        SFX.cardDeal();
+        Toast.show('🌊 The River is dealt!', 'ok');
+      } else if (stage === 'river') {
+        stage = 'showdown';
+        handleShowdown();
+        return;
+      }
+
+      turnIndex = 0;
+      renderAll();
+      promptPlayerTurn();
+    }
+
+    function handleShowdown() {
+      SFX.win();
+      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+      const humanWins = !players[0].folded;
+      if (humanWins) {
+        players[0].chips += pot;
+        Profile.recordWin('pokerWins');
+        Toast.show(`🏆 SHOWDOWN VICTORY! You won the 🪙${pot} Pot!`, 'ok');
+      } else {
+        players[1].chips += pot;
+        Toast.show(`🏁 BluffFox won the 🪙${pot} Pot!`, 'wa');
+      }
+      renderAll();
+      setTimeout(() => {
+        if (confirm('Hand Complete! Deal another hand?')) {
+          startNewHand();
+        }
+      }, 3000);
+    }
+
+    // Human Player Controls
+    document.getElementById('foldBtn').addEventListener('click', () => {
+      players[0].folded = true;
+      recordAction(0, 'Fold');
+      advanceTurn();
+    });
+
+    document.getElementById('checkCallBtn').addEventListener('click', () => {
+      const toCall = currentBet - players[0].currentBet;
+      if (toCall > 0) {
+        players[0].chips -= toCall;
+        players[0].currentBet += toCall;
+        pot += toCall;
+        recordAction(0, `Call 🪙${toCall}`);
+      } else {
+        recordAction(0, 'Check');
+      }
+      advanceTurn();
+    });
+
+    const slider = document.getElementById('betSlider');
+    slider.addEventListener('input', e => {
+      document.getElementById('betDisplay').textContent = e.target.value;
+    });
+
+    document.getElementById('raiseBtn').addEventListener('click', () => {
+      const amt = parseInt(slider.value);
+      players[0].chips -= amt;
+      players[0].currentBet += amt;
+      currentBet = players[0].currentBet;
+      pot += amt;
+      recordAction(0, `Raise 🪙${amt}`);
+      advanceTurn();
+    });
+
+    window.addEventListener('load', startNewHand);
+  </script>
+</body>
+</html>
