@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>WordGrid — Online & Local Multiplayer Word Game</title>
-<meta name="description" content="A strategic multiplayer word game. Place letters on a 15×15 grid, form valid English words (3+ letters) with Hindi meanings, unlock dual-placement powers, and outscore your friends." />
+<meta name="description" content="A strategic multiplayer word game. Place letters on a 15×15 grid, form valid English words (meaningful 2-letter words & 3+ letter words; singular forms only) with Hindi meanings, unlock powers, and outscore your friends." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@500;700;800&display=swap" rel="stylesheet" />
@@ -521,7 +521,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <div class="hero">
         <div class="hero-badge"><span class="hero-dot"></span>Multiplayer Word Game</div>
         <h1>Build.<br>Connect.<br><span class="gr">Win.</span></h1>
-        <p>Place letters on a 15×15 grid. Form valid English words (3+ letters: Horizontal →, Vertical ↓, or Diagonal ↘ North-West to South-East) to score points and discover Hindi meanings. 6+ letter words unlock Dual-Placement Powers!</p>
+        <p>Place letters on a 15×15 grid. Form valid English words (meaningful 2-letter words like <i>he, it, an, of</i> & 3+ letter words; singular forms only) to score points and discover Hindi meanings. 6+ letter words unlock Dual-Placement Powers!</p>
         
         <div class="power-feature-badge">
             <span class="pf-icon">⚡</span>
@@ -687,6 +687,13 @@ const DIRS = [
 
 /* Built-in quick Hindi dictionary cache for 150+ common English words */
 const COMMON_HINDI = {
+    "am":"हूँ","an":"एक","as":"जैसे / के रूप में","at":"पर / में",
+    "be":"होना","by":"द्वारा / के पास","do":"करना","go":"जाना",
+    "he":"वह (पुरुष)","hi":"नमस्ते / हैलो","if":"यदि / अगर","in":"में / अंदर",
+    "is":"है","it":"यह","me":"मुझे / मुझको","my":"मेरा / मेरी",
+    "no":"नहीं","of":"का / की / के","ok":"ठीक है","on":"पर / ऊपर",
+    "or":"या / अथवा","ox":"बैल","so":"इसलिए / तो","to":"को / तक",
+    "up":"ऊपर","us":"हमें / हमको","we":"हम / हम सब",
     "act":"कार्य / अभिनय","add":"जोड़ना","air":"हवा / वायु","all":"सब / सभी","and":"और","art":"कला",
     "bad":"बुरा / खराब","bag":"थैला / बैग","bar":"सलाख / पट्टी","bed":"बिस्तर / पलंग","big":"बड़ा","box":"डिब्बा / बक्सा",
     "boy":"लड़का","bus":"बस","car":"गाड़ी / कार","cat":"बिल्ली","cow":"गाय","cup":"प्याला / कप","day":"दिन",
@@ -963,12 +970,115 @@ const DISALLOWED_WORDS = new Set([
     'abo', 'abe', 'abey', 'bcd', 'xyz', 'bbl', 'bb', 'ccm', 'cmdg', 'bkg', 'bks', 'bls', 'bnf', 'cdf', 'cdg', 'cdr'
 ]);
 
-// Minimum word length is 3 letters to prevent accidental 2-letter clutter when letters attach
+// Whitelist of valid, meaningful 2-letter English words (specifically including he, it, an, of, etc.)
+const VALID_2_LETTER_WORDS = new Set([
+    'am', 'an', 'as', 'at', 'be', 'by', 'do', 'go', 'he', 'hi',
+    'if', 'in', 'is', 'it', 'me', 'my', 'no', 'of', 'ok', 'on',
+    'or', 'ox', 'so', 'to', 'up', 'us', 'we'
+]);
+
+// Whitelist of words ending in 's' that are singular/invariant and must NOT be treated as plurals
+const NON_PLURALS = new Set([
+    'as', 'is', 'us',
+    'bus', 'gas', 'yes', 'this', 'thus', 'lens', 'plus', 'news',
+    'chaos', 'basis', 'axis', 'status', 'virus', 'focus', 'bonus',
+    'campus', 'canvas', 'circus', 'genius', 'radius', 'genus', 'minus',
+    'series', 'species', 'tennis', 'atlas', 'has', 'was', 'his', 'its',
+    'always', 'towards', 'sometimes', 'besides', 'perhaps',
+    'physics', 'mathematics', 'economics', 'electronics'
+]);
+
+// Irregular plural mappings
+const IRREGULAR_PLURALS = {
+    'men': 'man', 'women': 'woman', 'children': 'child', 'feet': 'foot',
+    'teeth': 'tooth', 'mice': 'mouse', 'geese': 'goose', 'people': 'person', 'oxen': 'ox'
+};
+
+// Returns singular stem if word is a recognized plural; otherwise returns null
+function getSingularStem(w) {
+    if (!w || typeof w !== 'string') return null;
+    const word = w.toLowerCase().trim();
+    if (word.length < 3) return null;
+    if (NON_PLURALS.has(word)) return null;
+    if (IRREGULAR_PLURALS[word]) return IRREGULAR_PLURALS[word];
+
+    if (!word.endsWith('s')) return null;
+    if (word.endsWith('ss')) return null; // glass, class, grass, boss, kiss, dress, press
+
+    // ...ies -> ...y (e.g. babies -> baby, cities -> city)
+    if (word.length >= 4 && word.endsWith('ies')) {
+        const stemY = word.slice(0, -3) + 'y';
+        if (checkWord(stemY) || (dictReady && DICT.has(stemY)) || COMMON_HINDI[stemY]) {
+            return stemY;
+        }
+    }
+
+    // ...ves -> ...f / ...fe (e.g. wolves -> wolf, leaves -> leaf, lives -> life)
+    if (word.length >= 4 && word.endsWith('ves')) {
+        const stemF = word.slice(0, -3) + 'f';
+        if (checkWord(stemF) || (dictReady && DICT.has(stemF)) || COMMON_HINDI[stemF]) {
+            return stemF;
+        }
+        const stemFE = word.slice(0, -3) + 'fe';
+        if (checkWord(stemFE) || (dictReady && DICT.has(stemFE)) || COMMON_HINDI[stemFE]) {
+            return stemFE;
+        }
+    }
+
+    // ...es (e.g. apples -> apple, boxes -> box, dishes -> dish)
+    if (word.length >= 4 && word.endsWith('es')) {
+        const stemE = word.slice(0, -1);
+        if (stemE.endsWith('e') && (checkWord(stemE) || (dictReady && DICT.has(stemE)) || COMMON_HINDI[stemE])) {
+            return stemE;
+        }
+        const stemES = word.slice(0, -2);
+        if (checkWord(stemES) || (dictReady && DICT.has(stemES)) || COMMON_HINDI[stemES]) {
+            return stemES;
+        }
+    }
+
+    // ...s (e.g. cats -> cat, dogs -> dog, trees -> tree, cars -> car)
+    if (word.length >= 3) {
+        const stemS = word.slice(0, -1);
+        if (checkWord(stemS) || (dictReady && DICT.has(stemS)) || COMMON_HINDI[stemS]) {
+            return stemS;
+        }
+    }
+
+    return null;
+}
+
+// Returns potential plural variants for a given word
+function getPluralVariants(w) {
+    if (!w || typeof w !== 'string') return [];
+    const word = w.toLowerCase().trim();
+    const res = [];
+    for (const [pl, sg] of Object.entries(IRREGULAR_PLURALS)) {
+        if (sg === word) res.push(pl);
+    }
+    if (word.endsWith('y') && word.length >= 3 && !/[aeiou]y$/.test(word)) {
+        res.push(word.slice(0, -1) + 'ies');
+    }
+    if (/(?:[sxz]|ch|sh)$/.test(word)) {
+        res.push(word + 'es');
+    } else if (word.endsWith('fe')) {
+        res.push(word.slice(0, -2) + 'ves');
+    } else if (word.endsWith('f') && !word.endsWith('ff')) {
+        res.push(word.slice(0, -1) + 'ves');
+    }
+    res.push(word + 's');
+    return res;
+}
+
+// Validates whether word is an acceptable English word (curated 2-letter words, 3+ letter dictionary words)
 function checkWord(w) {
     if (!w) return false;
     w = String(w).trim().toLowerCase();
-    if (w.length < 3 || w.length > C.BS) return false;
+    if (w.length < 2 || w.length > C.BS) return false;
     if (!/^[a-z]+$/.test(w)) return false;
+    if (w.length === 2) {
+        return VALID_2_LETTER_WORDS.has(w);
+    }
     if (DISALLOWED_WORDS.has(w)) return false;
     if (dictReady) return DICT.has(w);
     return false;
@@ -1054,8 +1164,8 @@ function findWordsThrough(board, row, col) {
             lineCells.push({r, c, letter: board[r][c]});
             r += dir.dr; c += dir.dc;
         }
-        // If line is less than 3 letters, no valid word can be formed
-        if (lineCells.length < 3) continue;
+        // If line is less than 2 letters, no valid word can be formed
+        if (lineCells.length < 2) continue;
 
         const placedIdx = lineCells.findIndex(cell => cell.r === row && cell.c === col);
         if (placedIdx === -1) continue;
@@ -1067,7 +1177,7 @@ function findWordsThrough(board, row, col) {
         for (let i = 0; i <= placedIdx; i++) {
             for (let j = placedIdx; j < lineCells.length; j++) {
                 const len = j - i + 1;
-                if (len < 3 || len <= maxLen) continue;
+                if (len < 2 || len <= maxLen) continue;
                 const subStr = lineCells.slice(i, j + 1).map(c => c.letter).join('');
                 if (checkWord(subStr)) {
                     maxLen = len;
@@ -1484,15 +1594,56 @@ function placeLetter(row, col, letter, isRemote = false){
     const candidates = findWordsThrough(S.board, row, col);
     const newWords = [];
     const reusedWords = [];
+    const pluralRejections = [];
 
     for (const cand of candidates) {
         if (S.scoredKeys.has(cand.key)) continue;
         const wLower = cand.word.toLowerCase();
+
+        // 1. Check if the exact word was already scored earlier
         if (S.usedWords.has(wLower)) {
             S.scoredKeys.add(cand.key);
             reusedWords.push(cand.word);
             continue;
         }
+
+        // 2. Reject plural words (only singular forms can score points)
+        const stem = getSingularStem(wLower);
+        if (stem) {
+            S.scoredKeys.add(cand.key);
+            if (S.usedWords.has(stem)) {
+                pluralRejections.push({
+                    word: cand.word,
+                    reason: `singular "${stem.toUpperCase()}" was already scored`
+                });
+            } else {
+                pluralRejections.push({
+                    word: cand.word,
+                    reason: `plural forms are not accepted (only singular words can score)`
+                });
+            }
+            continue;
+        }
+
+        // 3. Enforce one-form rule: if plural form was already scored, singular cannot score again
+        const plurals = getPluralVariants(wLower);
+        let pluralUsed = '';
+        for (const pl of plurals) {
+            if (S.usedWords.has(pl)) {
+                pluralUsed = pl;
+                break;
+            }
+        }
+        if (pluralUsed) {
+            S.scoredKeys.add(cand.key);
+            pluralRejections.push({
+                word: cand.word,
+                reason: `plural "${pluralUsed.toUpperCase()}" was already scored`
+            });
+            continue;
+        }
+
+        // 4. Validate and score
         if (checkWord(cand.word)) {
             S.scoredKeys.add(cand.key);
             S.usedWords.add(wLower);
@@ -1500,13 +1651,29 @@ function placeLetter(row, col, letter, isRemote = false){
         }
     }
 
-    if (reusedWords.length > 0 && newWords.length === 0) {
+    if (pluralRejections.length > 0 && newWords.length === 0) {
+        const pInfo = pluralRejections.map(p => `"${p.word}" (${p.reason})`).join(', ');
+        const msg = `⚠️ ${pInfo}!`;
+        toast(msg, 'wa');
+        if (S.mode === 'online' && S.isHost) {
+            broadcastAll({type: 'toast', msg, tt: 'wa'});
+        }
+    } else if (reusedWords.length > 0 && newWords.length === 0) {
         const rNames = reusedWords.map(w => `"${w}"`).join(', ');
         const msg = `⚠️ ${rNames} was already used earlier and cannot score again!`;
         toast(msg, 'wa');
         if (S.mode === 'online' && S.isHost) {
             broadcastAll({type: 'toast', msg, tt: 'wa'});
         }
+    } else if (pluralRejections.length > 0 && newWords.length > 0) {
+        const pNames = pluralRejections.map(p => `"${p.word}"`).join(', ');
+        setTimeout(() => {
+            const skipMsg = `ℹ️ Plural ${pNames} skipped (only singular words can score)`;
+            toast(skipMsg, 'wa');
+            if (S.mode === 'online' && S.isHost) {
+                broadcastAll({type: 'toast', msg: skipMsg, tt: 'wa'});
+            }
+        }, 800);
     }
 
     let earnedPowers = 0;
@@ -2464,7 +2631,7 @@ function showRules(){
     o.innerHTML = `<div class="modal">
         <h2>📖 WordGrid Rules & Powers</h2>
         <h3>🎯 Game Goal</h3>
-        <p>Form valid English words (3+ letters) on a 15×15 board to score points, discover their Hindi meanings, and use strategic power-ups to outplay your opponents!</p>
+        <p>Form valid English words on a 15×15 board to score points, discover their Hindi meanings, and use strategic power-ups to outplay your opponents!</p>
 
         <h3>⚡ 6-Letter Word Power System</h3>
         <ul>
@@ -2482,8 +2649,10 @@ function showRules(){
         <h3>📝 Basic Mechanics</h3>
         <ul>
             <li>On your turn, <b>pick a letter</b> (A–Z) and <b>tap an empty cell</b>.</li>
-            <li>Valid English words of <b>3 or more letters</b> in permitted directions: <b>Horizontal (→)</b>, <b>Vertical (↓)</b>, or <b>Diagonal (↘ North-West to South-East only)</b> through that cell earn <b>points = word length</b>.</li>
-            <li>Only the <b>longest meaningful English word</b> formed along each direction receives marks. Non-words, abbreviations, and accidental 2-letter attachments do not score.</li>
+            <li>Valid English words in permitted directions: <b>Horizontal (→)</b>, <b>Vertical (↓)</b>, or <b>Diagonal (↘ North-West to South-East only)</b> through that cell earn <b>points = word length</b>.</li>
+            <li><b>Meaningful 2-letter words</b> (such as <i>he, it, an, of, is, in, to, go, we, no, at, on, up, us, am, be, do...</i>) are accepted and score 2 points!</li>
+            <li><b>Singular-Only & One-Form Rule</b>: Plural forms (like <i>cats, dogs, apples, boxes</i>) do not score. Only singular words can score points, and only one form of each word can score per game.</li>
+            <li>Only the <b>longest meaningful English word</b> formed along each direction receives marks. Non-words, abbreviations, and random letter clutter do not score.</li>
             <li>Each unique word can only be scored once per game.</li>
         </ul>
 
