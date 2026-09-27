@@ -96,6 +96,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 .prow{display:flex;align-items:center;gap:8px}
 .prow .pd{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .prow input{flex:1;height:38px;padding:0 10px;background:var(--panel2);border:1px solid var(--border);border-radius:var(--r-s);color:var(--text);font-size:14px;font-weight:600}
+.prow input:focus{border-color:var(--accent)}
 .pbtn,.sbtn{width:100%;height:44px;border-radius:var(--r-m);font-weight:800;font-size:13px;transition:var(--tr);margin-top:6px}
 .pbtn{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 16px var(--accent-glow)}
 .sbtn{color:var(--text);background:var(--panel2);border:1px solid var(--border)}
@@ -292,14 +293,13 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
    RESPONSIVE DESIGN (MOBILE & TABLET EXCELLENCE)
 =========================================================== */
 @media(max-width: 1023px) {
-    /* Mobile & Tablet View Routing */
     .gnav-bar { display: flex; }
     .mob-bar { display: flex; }
     
     .glayout {
         display: flex;
         flex-direction: column;
-        height: calc(100dvh - 50px - 34px - 38px); /* subtract topbar, mob-bar, and gnav-bar */
+        height: calc(100dvh - 50px - 34px - 38px);
         overflow: hidden;
     }
     .side.l, .side.r, .barea {
@@ -310,13 +310,11 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         overflow-y: auto;
     }
     
-    /* View Switching */
     .glayout[data-active-view="board"] .barea { display: flex; }
     .glayout[data-active-view="history"] .side.r { display: flex; }
     .glayout[data-active-view="powers"] .side.l { display: flex; }
     .glayout[data-active-view="dict"] .side.r { display: flex; }
 
-    /* History vs Dict sub-view inside side.r */
     .glayout[data-active-view="history"] .dict-section { display: none !important; }
     .glayout[data-active-view="history"] .history-section { display: flex !important; height: 100%; }
     .glayout[data-active-view="history"] .hlist { max-height: calc(100dvh - 180px); }
@@ -324,7 +322,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     .glayout[data-active-view="dict"] .history-section { display: none !important; }
     .glayout[data-active-view="dict"] .dict-section { display: block !important; margin-top: 0 !important; border-top: none !important; }
 
-    /* Compact 3-row keyboard on mobile */
     .kgrid {
         grid-template-columns: repeat(9, 1fr) !important;
         gap: 2px !important;
@@ -335,7 +332,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         aspect-ratio: 1.1 !important;
     }
 
-    /* Board sizing to guarantee fit without scrolling on phone screens */
     .board {
         width: min(94vw, calc(100dvh - 275px), 370px) !important;
         max-width: 370px !important;
@@ -347,7 +343,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         font-size: clamp(9px, 3.2vw, 15px) !important;
     }
 
-    /* Compact elements */
     .tbanner {
         width: min(94vw, 370px) !important;
         padding: 4px 8px !important;
@@ -375,7 +370,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         margin-bottom: 3px !important;
     }
 
-    /* Lobby Responsive for Mobile */
     .screen {
         padding: 10px;
         align-items: flex-start;
@@ -387,7 +381,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         gap: 12px;
     }
     .hero {
-        order: 2; /* Put game setup card right at top! */
+        order: 2;
         padding: 16px 14px;
         border-radius: var(--r-l);
     }
@@ -395,12 +389,12 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     .hero p { font-size: 12px; }
     .tags { display: none; }
     .lcard {
-        order: 1; /* Setup card at top for instant mobile play */
+        order: 1;
         padding: 16px 14px;
         border-radius: var(--r-l);
     }
     .field input, .field select, .prow input {
-        font-size: 16px !important; /* Prevents iOS auto-zoom */
+        font-size: 16px !important;
     }
 }
 
@@ -533,10 +527,8 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
 <!-- GAME -->
 <section id="gameScr" class="screen gm hidden">
-<!-- Mobile player score chips -->
 <div id="mobBar" class="mob-bar"></div>
 
-<!-- Mobile & Tablet Tab Bar -->
 <nav class="gnav-bar" id="gameNavTabs">
     <button class="gnav-btn act" data-gview="board">🎯 Board</button>
     <button class="gnav-btn" data-gview="history">📜 History <span class="gnav-badge" id="gHistBadge">0</span></button>
@@ -550,7 +542,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         <div class="stitle">Players & Scores</div>
         <div id="pList" class="plist"></div>
 
-        <!-- Power Inventory Card -->
         <div class="power-card">
             <div class="power-card-title">⚡ Dual-Letter Power</div>
             <div class="power-card-desc">Make a 6+ letter word to earn 1 power. Place 2 letters in one turn!</div>
@@ -569,7 +560,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
     <!-- CENTER: Game Board -->
     <main class="barea">
-        <!-- Turn Status Banner -->
         <div class="tbanner" id="tBanner">
             <div>
                 <div class="tinfo" id="gTInfo">Waiting...</div>
@@ -578,7 +568,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
             <div class="ttimer" id="gTimer">60</div>
         </div>
 
-        <!-- Power Active Indicator Banner -->
         <div class="power-alert-bar hidden" id="powerAlertBar">
             <div class="pab-left">
                 <span>⚡</span>
@@ -587,18 +576,14 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
             <span class="pab-badge" id="pabProgress">1 of 2</span>
         </div>
 
-        <!-- Board-area Power Trigger Button (Visible when active player has charges) -->
         <button id="boardPowerBtn" class="power-bar-btn hidden">⚡ Use Dual Placement (Place 2 letters this turn!)</button>
 
-        <!-- 12x12 Board -->
         <div class="bwrap"><div id="board" class="board"></div></div>
 
-        <!-- Selected Letter Preview -->
         <div class="sel-bar" id="selBar">
             <span class="sel-hint" id="selHint">Select a letter from keyboard below</span>
         </div>
 
-        <!-- On-Screen Keyboard -->
         <div id="kPanel" class="kpanel">
             <div class="khead">
                 <span class="klbl">Pick Letter</span>
@@ -664,17 +649,50 @@ const DIRS = [
     {dr:-1,dc:1,name:'D2'}, // diag ↗
 ];
 
-/* Built-in quick Hindi dictionary cache for common English words */
+/* Built-in quick Hindi dictionary cache for 150+ common English words */
 const COMMON_HINDI = {
-    "cat":"बिल्ली","dog":"कुत्ता","sun":"सूर्य / सूरज","moon":"चांद","star":"तारा","tree":"पेड़",
-    "book":"किताब / पुस्तक","game":"खेल","play":"खेलना","water":"पानी / जल","house":"घर","home":"घर",
-    "word":"शब्द","letter":"अक्षर / पत्र","light":"प्रकाश / रोशनी","love":"प्रेम / प्यार","peace":"शांति",
-    "friend":"मित्र / दोस्त","player":"खिलाड़ी","gold":"सोना / स्वर्ण","time":"समय / वक्त","life":"जीवन / ज़िंदगी",
-    "road":"सड़क / रास्ता","flower":"फूल / पुष्प","garden":"बगीचा / वाटिका","school":"विद्यालय / स्कूल",
-    "river":"नदी","sky":"आकाश / आसमान","wind":"हवा / पवन","fire":"आग / अग्नि","earth":"पृथ्वी / धरती",
-    "king":"राजा","queen":"रानी","bird":"पक्षी / चिड़िया","fish":"मछली","food":"भोजन / खाना",
-    "music":"संगीत","sound":"आवाज / ध्वनि","power":"शक्ति / ताक़त","magic":"जादू","stone":"पत्थर",
-    "heart":"दिल / हृदय","mind":"मन / दिमाग","smart":"होशियार / चतुर","great":"महान / शानदार"
+    "act":"कार्य / अभिनय","add":"जोड़ना","air":"हवा / वायु","all":"सब / सभी","and":"और","art":"कला",
+    "bad":"बुरा / खराब","bag":"थैला / बैग","bar":"सलाख / पट्टी","bed":"बिस्तर / पलंग","big":"बड़ा","box":"डिब्बा / बक्सा",
+    "boy":"लड़का","bus":"बस","car":"गाड़ी / कार","cat":"बिल्ली","cow":"गाय","cup":"प्याला / कप","day":"दिन",
+    "dog":"कुत्ता","ear":"कान","eat":"खाना","egg":"अंडा","end":"अंत / समाप्त","eye":"आंख / नेत्र",
+    "fan":"पंखा","far":"दूर","fly":"उड़ना / मक्खी","fox":"लोमड़ी","get":"पाना / मिलना","god":"भगवान / ईश्वर",
+    "gun":"बंदूक","hat":"टोपी","hot":"गर्म","ice":"बर्फ","ink":"स्याही","jar":"जार / मर्तबान","key":"चाबी",
+    "kid":"बच्चा","leg":"टांग / पैर","lip":"होंठ","man":"आदमी / पुरुष","map":"नक्शा","net":"जाल / इंटरनेट",
+    "new":"नया","nut":"अखरोट / नट","oil":"तेल","old":"पुराना / वृद्ध","one":"एक","owl":"उल्लू","pan":"कड़ाही",
+    "pen":"कलम / पेन","pig":"सूअर","pot":"बर्तन / घड़ा","rat":"चूहा","red":"लाल","run":"दौड़ना / भागना",
+    "sea":"समुद्र / सागर","see":"देखना","sky":"आकाश / आसमान","son":"बेटा / पुत्र","sun":"सूर्य / सूरज",
+    "tea":"चाय","top":"शीर्ष / ऊपर","toy":"खिलौना","van":"वैन / गाड़ी","war":"युद्ध / जंग","way":"रास्ता / मार्ग",
+    "win":"जीतना","yes":"हाँ","zoo":"चिड़ियाघर",
+    "ball":"गेंद","bank":"बैंक / किनारा","bear":"भालू","bird":"पक्षी / चिड़िया","boat":"नाव / किश्ती",
+    "book":"किताब / पुस्तक","cake":"केक","city":"शहर / नगर","cold":"ठंडा / सर्दी","cook":"पकाना / रसोइया",
+    "dark":"अंधेरा / गहरा","door":"दरवाजा","draw":"चित्र बनाना","duck":"बत्तख","face":"चेहरा","farm":"खेत",
+    "fast":"तेज़ / उपवास","fish":"मछली","food":"भोजन / खाना","frog":"मेंढक","game":"खेल","girl":"लड़की",
+    "gold":"सोना / स्वर्ण","hair":"बाल","hand":"हाथ","head":"सिर / प्रमुख","help":"मदद / सहायता",
+    "home":"घर","hope":"आशा / उम्मीद","iron":"लोहा / इस्त्री","jump":"कूदना / छलांग","king":"राजा",
+    "lake":"झील","lamp":"दीपक / चिराग","leaf":"पत्ता","life":"जीवन / ज़िंदगी","lion":"शेर / सिंह",
+    "love":"प्रेम / प्यार","milk":"दूध","moon":"चांद / चंद्रमा","name":"नाम","news":"समाचार / ख़बर",
+    "nose":"नाक","park":"उद्यान / पार्क","rain":"बारिश / वर्षा","ring":"अंगूठी / घंटी","road":"सड़क / मार्ग",
+    "rock":"चट्टान / पत्थर","rose":"गुलाब","ship":"जहाज","shoe":"जूता","shop":"दुकान","sing":"गाना",
+    "snow":"बर्फ / हिम","song":"गीत / गाना","star":"तारा","stop":"रुकना / विराम","time":"समय / वक्त",
+    "tree":"पेड़ / वृक्ष","walk":"चलना / सैर","wall":"दीवार","warm":"गर्म / गुनगुना","wind":"हवा / पवन",
+    "wolf":"भेड़िया","word":"शब्द","year":"वर्ष / साल",
+    "apple":"सेब","beach":"समुद्र तट","bread":"रोटी / ब्रेड","chair":"कुर्सी","cloud":"बादल",
+    "dance":"नाचना / नृत्य","dream":"सपना / स्वप्न","earth":"पृथ्वी / धरती","field":"मैदान / खेत",
+    "fight":"लड़ाई / मुकाबला","flame":"ज्वाला / लौ","fruit":"फल","glass":"कांच / गिलास","green":"हरा",
+    "heart":"दिल / हृदय","horse":"घोड़ा","house":"घर / मकान","light":"प्रकाश / रोशनी","money":"धन / पैसा",
+    "music":"संगीत","night":"रात / रात्रि","ocean":"महासागर","party":"दावत / दल","peace":"शांति",
+    "phone":"फ़ोन","plant":"पौधा","queen":"रानी","river":"नदी","round":"गोल / चक्र",
+    "smile":"मुस्कान","sound":"ध्वनि / आवाज","space":"अंतरिक्ष / जगह","sport":"खेलकूद","stone":"पत्थर",
+    "sugar":"चीनी / शक्कर","table":"मेज़","tiger":"बाघ","train":"रेलगाड़ी / ट्रेन","water":"पानी / जल",
+    "white":"सफेद","world":"विश्व / संसार","youth":"युवा / जवानी",
+    "animal":"जानवर / पशु","banana":"केला","beauty":"सुंदरता","bridge":"पुल","camera":"कैमरा",
+    "castle":"महल / किला","circle":"वृत्त / घेरा","doctor":"चिकित्सक / डॉक्टर","dragon":"अजगर / ड्रैगन",
+    "energy":"ऊर्जा / शक्ति","family":"परिवार","father":"पिता","flower":"फूल / पुष्प","forest":"जंगल / वन",
+    "friend":"मित्र / दोस्त","future":"भविष्य","garden":"बगीचा / वाटिका","island":"द्वीप","jungle":"जंगल",
+    "market":"बाजार","monkey":"बंदर","mother":"माता / माँ","nature":"प्रकृति","orange":"संतरा / नारंगी",
+    "people":"लोग / जनता","planet":"ग्रह","player":"खिलाड़ी","school":"विद्यालय / स्कूल","shadow":"छाया / परछाई",
+    "silver":"चांदी","sister":"बहन","spring":"वसंत / झरना","street":"सड़क / गली","summer":"गर्मी / ग्रीष्म",
+    "temple":"मंदिर","travel":"यात्रा","valley":"घाटी","window":"खिड़की","winter":"सर्दी / शीत ऋतु","yellow":"पीला"
 };
 
 /* ===========================================================
@@ -833,6 +851,7 @@ function checkWord(w) {
 function speakWord(w) {
     try {
         if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(w);
             u.lang = 'en-US';
             u.rate = 0.9;
@@ -944,11 +963,13 @@ $$('.gnav-btn').forEach(btn => {
 =========================================================== */
 function renderLocalNames(){
     const n = Number($('localCount').value), c = $('localNames');
+    const prevNames = Array.from(c.querySelectorAll('.ln-in')).map(inp => inp.value);
     c.innerHTML = '';
     for (let i = 0; i < n; i++) {
         const d = document.createElement('div');
         d.className = 'prow';
-        d.innerHTML = `<span class="pd" style="background:${C.COLORS[i]}"></span><input class="ln-in" placeholder="Player ${i+1}" maxlength="18" data-i="${i}" />`;
+        const val = prevNames[i] || '';
+        d.innerHTML = `<span class="pd" style="background:${C.COLORS[i]}"></span><input class="ln-in" placeholder="Player ${i+1}" maxlength="18" data-i="${i}" value="${esc(val)}" />`;
         c.appendChild(d);
     }
 }
@@ -1018,7 +1039,7 @@ function startGame(names){
 }
 
 /* ===========================================================
-   TIMER
+   TIMER (HOST/LOCAL AUTHORITATIVE)
 =========================================================== */
 function startTimer(){
     stopTimer();
@@ -1035,7 +1056,10 @@ function startTimer(){
         updTimer();
         if (S.timerVal <= 0) {
             stopTimer();
-            handleSkip(true);
+            // In online mode, only host triggers timeout skip to prevent desync
+            if (S.mode === 'local' || S.isHost) {
+                handleSkip(true);
+            }
         }
     }, 1000);
 }
@@ -1132,7 +1156,6 @@ function activatePower(){
         broadcastAll({ type: 'toast', msg: `⚡ ${p.name} activated Dual Placement Power!`, tt: 'ok' });
     }
 
-    // Switch to board view on mobile so user sees the board
     if (window.innerWidth < 1024) {
         $$('.gnav-btn').forEach(b => b.classList.remove('act'));
         $$('.gnav-btn')[0].classList.add('act');
@@ -1257,7 +1280,7 @@ $('kCollBtn').addEventListener('click', () => {
 });
 
 /* ===========================================================
-   PLACE LETTER
+   PLACE LETTER (CORE GAMEPLAY WITH POWER & DEDUPLICATION)
 =========================================================== */
 function placeLetter(row, col, letter){
     if (!isMyTurn() || S.board[row][col]) return;
@@ -1278,12 +1301,14 @@ function placeLetter(row, col, letter){
 
     const candidates = findWordsThrough(S.board, row, col);
     const newWords = [];
+    const reusedWords = [];
 
     for (const cand of candidates) {
         if (S.scoredKeys.has(cand.key)) continue;
         const wLower = cand.word.toLowerCase();
         if (S.usedWords.has(wLower)) {
             S.scoredKeys.add(cand.key);
+            reusedWords.push(cand.word);
             continue;
         }
         if (checkWord(cand.word)) {
@@ -1291,6 +1316,11 @@ function placeLetter(row, col, letter){
             S.usedWords.add(wLower);
             newWords.push(cand);
         }
+    }
+
+    if (reusedWords.length > 0 && newWords.length === 0) {
+        const rNames = reusedWords.map(w => `"${w}"`).join(', ');
+        toast(`⚠️ ${rNames} was already used earlier and cannot score again!`, 'wa');
     }
 
     let earnedPowers = 0;
@@ -1321,6 +1351,9 @@ function placeLetter(row, col, letter){
                     if (hi) {
                         histItem.hindi = hi;
                         renderHistory();
+                        if (S.mode === 'online' && S.isHost) {
+                            broadcastGS();
+                        }
                     }
                 });
             }
@@ -1354,9 +1387,11 @@ function placeLetter(row, col, letter){
 
     renderAll();
 
+    // Dual turn: first placement done, prompt for 2nd placement
     if (S.powerActive && S.placementsLeft > 0) {
         SFX.tap();
         toast(`⚡ DUAL MOVE: Placement 1 done! Place your 2nd letter.`, 'inf');
+        startTimer(); // Reset timer so player has full time for 2nd placement!
         setTimeout(() => {
             S.justCells = new Set();
             S.wordHiCells = new Set();
@@ -1637,6 +1672,7 @@ function backToLobby(){
     S.board = emptyBoard(); S.history = [];
     S.pickedLetter = null; S.selectedCell = null;
     S.scoredKeys = new Set(); S.usedWords = new Set();
+    S.justCells = new Set(); S.wordHiCells = new Set();
     S.powerActive = false; S.placementsLeft = 1;
     setConn(false, 'Offline');
     document.querySelectorAll('.go-ov').forEach(e => e.remove());
@@ -1703,7 +1739,9 @@ function broadcastGS(){
         powerActive: S.powerActive,
         placementsLeft: S.placementsLeft,
         scoredKeys: [...S.scoredKeys],
-        usedWords: [...S.usedWords]
+        usedWords: [...S.usedWords],
+        justCells: [...S.justCells],
+        wordHiCells: [...S.wordHiCells]
     });
 }
 
@@ -1729,6 +1767,7 @@ $('createBtn').addEventListener('click', () => {
         S.board = emptyBoard(); S.history = []; S.curPI = 0; S.turn = 1; S.skips = 0;
         S.started = false; S.over = false; S.conns = [];
         S.scoredKeys = new Set(); S.usedWords = new Set();
+        S.justCells = new Set(); S.wordHiCells = new Set();
         S.powerActive = false; S.placementsLeft = 1;
         showWait(); SFX.tap();
     });
@@ -1802,6 +1841,11 @@ function handlePeerClose(conn){
     S.conns = S.conns.filter(c => c.id !== conn.peer);
     if (p) toast(`${p.name} disconnected.`, 'wa');
     if (S.started && !S.over) {
+        if (S.players.length < 2) {
+            toast('Opponent left. Game over!', 'ok');
+            endGame();
+            return;
+        }
         if (S.curPI >= S.players.length) S.curPI = 0;
         broadcastGS();
     }
@@ -1818,6 +1862,7 @@ $('wStartBtn').addEventListener('click', () => {
     S.players.forEach(p => { p.score = 0; p.powers = 0; });
     S.board = emptyBoard(); S.history = []; S.curPI = 0; S.turn = 1; S.skips = 0;
     S.started = true; S.over = false; S.scoredKeys = new Set(); S.usedWords = new Set();
+    S.justCells = new Set(); S.wordHiCells = new Set();
     S.powerActive = false; S.placementsLeft = 1;
     broadcastGS();
     broadcastAll({type: 'toast', msg: 'Game started!', tt: 'ok'});
@@ -1918,6 +1963,22 @@ function applyGS(gs){
 
     if (gs.scoredKeys) S.scoredKeys = new Set(gs.scoredKeys);
     if (gs.usedWords) S.usedWords = new Set(gs.usedWords);
+    if (gs.justCells) S.justCells = new Set(gs.justCells);
+    if (gs.wordHiCells) S.wordHiCells = new Set(gs.wordHiCells);
+
+    // Fallback: fetch any missing Hindi meanings on client
+    if (S.history && S.history.length) {
+        S.history.forEach(m => {
+            if (!m.hindi) {
+                getHindiMeaning(m.word).then(hi => {
+                    if (hi && !m.hindi) {
+                        m.hindi = hi;
+                        renderHistory();
+                    }
+                });
+            }
+        });
+    }
 
     if (S.started) {
         showScr('gameScr');
