@@ -792,7 +792,7 @@ dictReady = true;
         }
         if (overlay) {
             overlay.style.opacity = '0';
-            setTimeout(() => overlay.remove(), 350);
+            setTimeout(() => { if (overlay && overlay.remove) overlay.remove(); }, 350);
         }
     }
 
@@ -800,7 +800,7 @@ dictReady = true;
     setTimeout(() => {
         if (overlay) {
             overlay.style.opacity = '0';
-            setTimeout(() => overlay.remove(), 350);
+            setTimeout(() => { if (overlay && overlay.remove) overlay.remove(); }, 350);
         }
     }, 400);
 
@@ -911,6 +911,7 @@ const S = {
     // Power-up state
     powerActive: false,
     placementsLeft: 1,
+    pendingRemotePlacement: false,
 
     // Deduplication & caching
     dCache: {},
@@ -1416,10 +1417,33 @@ document.addEventListener('keydown', e => {
 =========================================================== */
 function renderSelBar(){
     const bar = $('selBar');
+    bar.innerHTML = '';
     if (S.pickedLetter) {
-        bar.innerHTML = `<div class="sel-letter">${S.pickedLetter}</div><span class="sel-hint"><b>${S.pickedLetter}</b> chosen — tap cell on board</span><button class="sel-clear" onclick="S.pickedLetter=null;renderAll()">✕</button>`;
+        const d = document.createElement('div');
+        d.className = 'sel-letter';
+        d.textContent = S.pickedLetter;
+        const sp = document.createElement('span');
+        sp.className = 'sel-hint';
+        sp.innerHTML = `<b>${esc(S.pickedLetter)}</b> chosen — tap cell on board`;
+        const btn = document.createElement('button');
+        btn.className = 'sel-clear';
+        btn.textContent = '✕';
+        btn.setAttribute('aria-label', 'Clear letter selection');
+        btn.addEventListener('click', () => { S.pickedLetter = null; renderAll(); });
+        bar.appendChild(d);
+        bar.appendChild(sp);
+        bar.appendChild(btn);
     } else if (S.selectedCell) {
-        bar.innerHTML = `<span class="sel-hint">Cell <b>(${S.selectedCell.r+1}, ${S.selectedCell.c+1})</b> — pick letter below</span><button class="sel-clear" onclick="S.selectedCell=null;renderAll()">✕</button>`;
+        const sp = document.createElement('span');
+        sp.className = 'sel-hint';
+        sp.innerHTML = `Cell <b>(${S.selectedCell.r+1}, ${S.selectedCell.c+1})</b> — pick letter below`;
+        const btn = document.createElement('button');
+        btn.className = 'sel-clear';
+        btn.textContent = '✕';
+        btn.setAttribute('aria-label', 'Clear cell selection');
+        btn.addEventListener('click', () => { S.selectedCell = null; renderAll(); });
+        bar.appendChild(sp);
+        bar.appendChild(btn);
     } else {
         bar.innerHTML = `<span class="sel-hint" id="selHint">Pick a letter from keyboard below</span>`;
     }
@@ -1433,8 +1457,9 @@ $('kCollBtn').addEventListener('click', () => {
 /* ===========================================================
    PLACE LETTER (CORE GAMEPLAY WITH POWER & DEDUPLICATION)
 =========================================================== */
-function placeLetter(row, col, letter){
-    if (!isMyTurn() || S.board[row][col]) return;
+function placeLetter(row, col, letter, isRemote = false){
+    if (!isRemote && !isMyTurn()) return;
+    if (S.board[row][col]) return;
 
     if (S.mode === 'online' && !S.isHost) {
         // Immediate optimistic placement for instant snappy feel
@@ -1442,6 +1467,7 @@ function placeLetter(row, col, letter){
         S.justCells = new Set([`${row}-${col}`]);
         S.pickedLetter = null;
         S.selectedCell = null;
+        S.pendingRemotePlacement = true;
         SFX.tap();
         renderAll();
 
@@ -1476,7 +1502,11 @@ function placeLetter(row, col, letter){
 
     if (reusedWords.length > 0 && newWords.length === 0) {
         const rNames = reusedWords.map(w => `"${w}"`).join(', ');
-        toast(`⚠️ ${rNames} was already used earlier and cannot score again!`, 'wa');
+        const msg = `⚠️ ${rNames} was already used earlier and cannot score again!`;
+        toast(msg, 'wa');
+        if (S.mode === 'online' && S.isHost) {
+            broadcastAll({type: 'toast', msg, tt: 'wa'});
+        }
     }
 
     let earnedPowers = 0;
@@ -1523,11 +1553,19 @@ function placeLetter(row, col, letter){
             curP().powers = (curP().powers || 0) + earnedPowers;
             SFX.powerEarn();
             const powerWordNames = newWords.filter(w => w.word.length >= 6).map(w => `"${w.word}"`).join(', ');
-            toast(`⚡ POWER UNLOCKED! ${curP().name} formed (${powerWordNames}) and gained ${earnedPowers}x Dual Placement!`, 'ok');
+            const msg = `⚡ POWER UNLOCKED! ${curP().name} formed (${powerWordNames}) and gained ${earnedPowers}x Dual Placement!`;
+            toast(msg, 'ok');
+            if (S.mode === 'online' && S.isHost) {
+                broadcastAll({type: 'toast', msg, tt: 'ok'});
+            }
         } else {
             SFX.ok();
             const wordNames = newWords.map(w => `"${w.word}"`).join(', ');
-            toast(`${curP().name} formed ${wordNames} → +${totalScore}!`, 'ok');
+            const msg = `${curP().name} formed ${wordNames} → +${totalScore}!`;
+            toast(msg, 'ok');
+            if (S.mode === 'online' && S.isHost) {
+                broadcastAll({type: 'toast', msg, tt: 'ok'});
+            }
         }
 
         newWords.forEach(w => lookupDef(w.word).then(d => { if(d) showDict(w.word, d); }));
@@ -1546,12 +1584,18 @@ function placeLetter(row, col, letter){
     // Dual turn: first placement done, prompt for 2nd placement
     if (S.powerActive && S.placementsLeft > 0) {
         SFX.tap();
-        toast(`⚡ DUAL MOVE: Placement 1 done! Place your 2nd letter.`, 'inf');
+        const msg = `⚡ DUAL MOVE: Placement 1 done! Place your 2nd letter.`;
+        toast(msg, 'inf');
+        if (S.mode === 'online' && S.isHost) {
+            broadcastGS();
+            broadcastAll({type: 'toast', msg, tt: 'inf'});
+        }
         startTimer(); // Reset timer so player has full time for 2nd placement!
         setTimeout(() => {
             S.justCells = new Set();
             S.wordHiCells = new Set();
             renderBoard();
+            if (S.mode === 'online' && S.isHost) broadcastGS();
         }, 1000);
         return;
     }
@@ -1559,7 +1603,11 @@ function placeLetter(row, col, letter){
     if (S.powerActive) {
         S.powerActive = false;
         S.placementsLeft = 1;
-        toast(`⚡ Dual turn finished!`, 'ok');
+        const msg = `⚡ Dual turn finished!`;
+        toast(msg, 'ok');
+        if (S.mode === 'online' && S.isHost) {
+            broadcastAll({type: 'toast', msg, tt: 'ok'});
+        }
     }
 
     setTimeout(() => {
@@ -1575,6 +1623,7 @@ function placeLetter(row, col, letter){
 function curP(){ return S.players[S.curPI]; }
 function isMyTurn(){
     if (!S.started || S.over) return false;
+    if (S.pendingRemotePlacement) return false;
     if (S.mode === 'local') return true;
     const cp = S.players[S.curPI];
     if (!cp) return false;
@@ -1762,34 +1811,68 @@ async function searchDict(w){
 
 function showDict(w, d, hi){
     const c = $('dRes');
+    c.innerHTML = '';
     const hindiMeaning = hi || S.hindiCache[w.toLowerCase()] || '';
     
-    let h = `<div class="dres">
-        <div class="dw">
-            <span>${esc(w.toUpperCase())}</span>
-            <button class="hspeak" onclick="speakWord('${esc(w)}')">🔊</button>
-        </div>`;
+    const dres = document.createElement('div');
+    dres.className = 'dres';
+
+    const dw = document.createElement('div');
+    dw.className = 'dw';
+    const spW = document.createElement('span');
+    spW.textContent = w.toUpperCase();
+    const spkBtn = document.createElement('button');
+    spkBtn.className = 'hspeak';
+    spkBtn.textContent = '🔊';
+    spkBtn.setAttribute('aria-label', `Listen to pronunciation of ${w}`);
+    spkBtn.addEventListener('click', () => speakWord(w));
+    dw.appendChild(spW);
+    dw.appendChild(spkBtn);
+    dres.appendChild(dw);
 
     if (hindiMeaning) {
-        h += `<div class="dres-hindi">🇮🇳 हिन्दी अर्थ: ${esc(hindiMeaning)}</div>`;
+        const hBox = document.createElement('div');
+        hBox.className = 'dres-hindi';
+        hBox.textContent = `🇮🇳 हिन्दी अर्थ: ${hindiMeaning}`;
+        dres.appendChild(hBox);
     }
 
     if (!d || typeof d !== 'object') {
-        h += `<div style="color:var(--muted);font-size:10px;margin-top:4px">${hindiMeaning ? '' : 'Definition not found in dictionary.'}</div></div>`;
-        c.innerHTML = h;
+        const noDef = document.createElement('div');
+        noDef.style.cssText = 'color:var(--muted);font-size:10px;margin-top:4px';
+        noDef.textContent = hindiMeaning ? '' : 'Definition not found in dictionary.';
+        dres.appendChild(noDef);
+        c.appendChild(dres);
         return;
     }
 
-    if (d.phonetic) h += `<div style="color:var(--muted);font-size:9px;margin-bottom:3px">${esc(d.phonetic)}</div>`;
+    if (d.phonetic) {
+        const ph = document.createElement('div');
+        ph.style.cssText = 'color:var(--muted);font-size:9px;margin-bottom:3px';
+        ph.textContent = d.phonetic;
+        dres.appendChild(ph);
+    }
+
     (d.meanings || []).slice(0, 3).forEach(m => {
-        h += `<div class="dp">${esc(m.partOfSpeech || '')}</div>`;
+        const dp = document.createElement('div');
+        dp.className = 'dp';
+        dp.textContent = m.partOfSpeech || '';
+        dres.appendChild(dp);
         (m.definitions || []).slice(0, 2).forEach(df => {
-            h += `<div class="dd">• ${esc(df.definition)}</div>`;
-            if (df.example) h += `<div style="color:var(--muted);font-size:9px;font-style:italic;margin-top:1px">"${esc(df.example)}"</div>`;
+            const dd = document.createElement('div');
+            dd.className = 'dd';
+            dd.textContent = `• ${df.definition}`;
+            dres.appendChild(dd);
+            if (df.example) {
+                const de = document.createElement('div');
+                de.style.cssText = 'color:var(--muted);font-size:9px;font-style:italic;margin-top:1px';
+                de.textContent = `"${df.example}"`;
+                dres.appendChild(de);
+            }
         });
     });
-    h += '</div>';
-    c.innerHTML = h;
+
+    c.appendChild(dres);
 }
 
 /* ===========================================================
@@ -1822,15 +1905,26 @@ function endGame(){
     $('goBtn').addEventListener('click', () => { ov.remove(); backToLobby(); });
 }
 
+let joinConnectTimer = null;
+let joinTimeoutTimer = null;
+
+function clearJoinTimers(){
+    if (joinConnectTimer) { clearTimeout(joinConnectTimer); joinConnectTimer = null; }
+    if (joinTimeoutTimer) { clearTimeout(joinTimeoutTimer); joinTimeoutTimer = null; }
+}
+
 function safelyDestroyPeer(cb){
+    clearJoinTimers();
     if (!S.peer) { if (cb) cb(); return; }
     try {
         const p = S.peer;
         S.peer = null;
         if (p) {
             p.removeAllListeners();
-            p.disconnect();
-            p.destroy();
+            if (!p.destroyed) {
+                try { p.disconnect(); } catch(e){}
+                try { p.destroy(); } catch(e){}
+            }
         }
     } catch(e) {}
     setTimeout(() => { if (cb) cb(); }, 120);
@@ -1838,15 +1932,19 @@ function safelyDestroyPeer(cb){
 
 function backToLobby(){
     stopTimer();
+    clearJoinTimers();
     S.started = false; S.over = false;
     safelyDestroyPeer();
     S.hostConn = null; S.conns = []; S.isHost = false; S.players = [];
     S.board = emptyBoard(); S.history = [];
     S.pickedLetter = null; S.selectedCell = null;
+    S.pendingRemotePlacement = false;
     S.scoredKeys = new Set(); S.usedWords = new Set();
     S.justCells = new Set(); S.wordHiCells = new Set();
     S.powerActive = false; S.placementsLeft = 1;
     setConn(false, 'Offline');
+    const jBtn = $('joinBtn'); if (jBtn) { jBtn.disabled = false; jBtn.textContent = 'Join Room'; }
+    const cBtn = $('createBtn'); if (cBtn) { cBtn.disabled = false; cBtn.textContent = 'Create Room'; }
     document.querySelectorAll('.go-ov').forEach(e => e.remove());
     showScr('lobbyScr');
 }
@@ -1950,6 +2048,10 @@ $('createBtn').addEventListener('click', () => {
     const name = $('hostName').value.trim();
     if (!name) { toast('Enter your name.', 'er'); $('hostName').focus(); return; }
 
+    const cBtn = $('createBtn');
+    cBtn.disabled = true;
+    cBtn.textContent = 'Creating...';
+
     safelyDestroyPeer(() => {
         S.mode = 'online'; S.isHost = true; S.myName = name; S.roomCode = genCode();
         S.maxPlayers = Number($('onlineCount').value);
@@ -1962,6 +2064,8 @@ $('createBtn').addEventListener('click', () => {
         S.peer = peer;
 
         peer.on('open', id => {
+            cBtn.disabled = false;
+            cBtn.textContent = 'Create Room';
             if (S.peer !== peer) return;
             S.myId = id; setConn(true, 'Hosting');
             S.players = [{id: S.myId, name: S.myName, score: 0, color: C.COLORS[0], powers: 0}];
@@ -1980,6 +2084,8 @@ $('createBtn').addEventListener('click', () => {
         });
 
         peer.on('error', err => {
+            cBtn.disabled = false;
+            cBtn.textContent = 'Create Room';
             if (S.peer !== peer) return;
             if (err.type === 'unavailable-id') {
                 toast('Code taken, generating new code...', 'wa');
@@ -2011,11 +2117,16 @@ function handlePeerData(conn, data){
     // Helper to find player index by connection or peer ID
     function getPI(id) {
         let idx = S.players.findIndex(p => p.id === id);
-        if (idx === -1) {
-            const entry = S.conns.find(c => c.conn === conn);
-            if (entry) idx = S.players.findIndex(p => p.id === entry.id);
+        if (idx !== -1) return idx;
+        const entry = S.conns.find(c => c.conn === conn || c.id === id);
+        if (entry) {
+            idx = S.players.findIndex(p => p.id === entry.id);
+            if (idx !== -1) return idx;
         }
-        return idx;
+        const cIdx = S.conns.findIndex(c => c.conn === conn);
+        if (cIdx !== -1 && cIdx + 1 < S.players.length) return cIdx + 1;
+        if (S.players.length === 2) return 1;
+        return -1;
     }
 
     if (data.type === 'join') {
@@ -2044,7 +2155,7 @@ function handlePeerData(conn, data){
         const pi = getPI(conn.peer);
         if (pi === -1 || pi !== S.curPI) { conn.send({type: 'error', msg: "Not your turn."}); return; }
         const p = S.players[pi];
-        if (!p.powers || p.powers <= 0 || S.powerActive) { conn.send({type: 'error', msg: "No power available."}); return; }
+        if (!p || (p.powers || 0) <= 0 || S.powerActive) { conn.send({type: 'error', msg: "No power available."}); return; }
         p.powers--;
         S.powerActive = true;
         S.placementsLeft = 2;
@@ -2055,9 +2166,17 @@ function handlePeerData(conn, data){
     }
     if (data.type === 'place') {
         const pi = getPI(conn.peer);
-        if (pi === -1 || pi !== S.curPI) { conn.send({type: 'error', msg: "Not your turn."}); return; }
-        if (!inB(data.row, data.col) || S.board[data.row][data.col]) { conn.send({type: 'error', msg: "Invalid cell."}); return; }
-        placeLetter(data.row, data.col, data.letter);
+        if (pi === -1 || pi !== S.curPI) {
+            conn.send({type: 'error', msg: "Not your turn."});
+            broadcastGS();
+            return;
+        }
+        if (!inB(data.row, data.col) || S.board[data.row][data.col]) {
+            conn.send({type: 'error', msg: "Invalid or occupied cell."});
+            broadcastGS();
+            return;
+        }
+        placeLetter(data.row, data.col, data.letter, true);
     }
     if (data.type === 'skip') {
         const pi = getPI(conn.peer);
@@ -2111,98 +2230,107 @@ $('joinBtn').addEventListener('click', () => {
 
     try { localStorage.setItem('wordgrid_player_name', name); } catch(e){}
 
-    S.mode = 'online'; S.isHost = false; S.myName = name; S.roomCode = code;
-    setConn(false, 'Connecting...');
-
     const jBtn = $('joinBtn');
     jBtn.disabled = true;
     jBtn.textContent = 'Connecting...';
 
-    if (S.peer && !S.peer.destroyed) {
-        try { S.peer.destroy(); } catch(e){}
-    }
+    safelyDestroyPeer(() => {
+        S.mode = 'online'; S.isHost = false; S.myName = name; S.roomCode = code;
+        setConn(false, 'Connecting...');
 
-    S.peer = new Peer(undefined, PEER_OPTS);
+        let retries = 0;
+        const maxRetries = 6;
+        let activeConn = null;
+        let isConnected = false;
 
-    let retries = 0;
-    const maxRetries = 5;
-    let activeConn = null;
+        const peer = new Peer(undefined, PEER_OPTS);
+        S.peer = peer;
 
-    S.peer.on('open', myId => {
-        S.myId = myId;
-        attemptConnect();
-    });
-
-    function attemptConnect(){
-        if (activeConn) {
-            try { activeConn.close(); } catch(e){}
-            activeConn = null;
-        }
-
-        const conn = S.peer.connect(C.PRE + S.roomCode, {
-            reliable: true,
-            serialization: 'json'
+        peer.on('open', myId => {
+            if (S.peer !== peer) return;
+            S.myId = myId;
+            attemptConnect();
         });
-        activeConn = conn;
 
-        let opened = false;
-        const timeout = setTimeout(() => {
-            if (!opened) {
+        function attemptConnect(){
+            clearJoinTimers();
+            if (isConnected || S.peer !== peer || peer.destroyed) return;
+
+            if (activeConn) {
+                try { activeConn.close(); } catch(e){}
+                activeConn = null;
+            }
+
+            const conn = peer.connect(C.PRE + S.roomCode, {
+                reliable: true,
+                serialization: 'json'
+            });
+            activeConn = conn;
+
+            joinTimeoutTimer = setTimeout(() => {
+                if (isConnected || S.peer !== peer) return;
                 retries++;
                 if (retries <= maxRetries) {
                     toast(`Connecting to room... attempt ${retries}/${maxRetries}`, 'inf');
-                    setTimeout(attemptConnect, 1200);
+                    joinConnectTimer = setTimeout(attemptConnect, 1500);
                 } else {
                     toast('Could not connect. Please check the code and ensure the host is waiting in lobby.', 'er');
                     setConn(false, 'Failed');
                     jBtn.disabled = false;
                     jBtn.textContent = 'Join Room';
+                    clearJoinTimers();
                     backToLobby();
                 }
-            }
-        }, 4000);
+            }, 5000);
 
-        conn.on('open', () => {
-            opened = true;
-            clearTimeout(timeout);
-            S.hostConn = conn;
-            setConn(true, 'Connected');
-            jBtn.disabled = false;
-            jBtn.textContent = 'Join Room';
-            conn.send({type: 'join', name: S.myName});
-        });
+            conn.on('open', () => {
+                if (S.peer !== peer) return;
+                isConnected = true;
+                clearJoinTimers();
+                S.hostConn = conn;
+                setConn(true, 'Connected');
+                jBtn.disabled = false;
+                jBtn.textContent = 'Join Room';
+                conn.send({type: 'join', name: S.myName});
+            });
 
-        conn.on('data', data => handleHostMsg(data));
+            conn.on('data', data => handleHostMsg(data));
 
-        conn.on('close', () => {
-            clearTimeout(timeout);
-            setConn(false, 'Disconnected');
-            if (S.started && !S.over) {
-                toast('Disconnected from host.', 'er');
-            }
-        });
+            conn.on('close', () => {
+                clearJoinTimers();
+                setConn(false, 'Disconnected');
+                if (S.started && !S.over) {
+                    toast('Disconnected from host.', 'er');
+                }
+            });
 
-        conn.on('error', err => {
-            console.warn('Connection error:', err);
-        });
-    }
+            conn.on('error', err => {
+                console.warn('Data connection notice:', err);
+            });
+        }
 
-    S.peer.on('error', err => {
-        if (err.type === 'peer-unavailable') {
-            retries++;
-            if (retries <= maxRetries) {
-                toast(`Searching for room... attempt ${retries}/${maxRetries}`, 'inf');
-                setTimeout(attemptConnect, 1200);
+        peer.on('error', err => {
+            if (S.peer !== peer) return;
+            if (err.type === 'peer-unavailable') {
+                if (isConnected) return;
+                clearJoinTimers();
+                retries++;
+                if (retries <= maxRetries) {
+                    toast(`Searching for room... attempt ${retries}/${maxRetries}`, 'inf');
+                    joinConnectTimer = setTimeout(attemptConnect, 1500);
+                    return;
+                }
+                toast('Room not found. Check code or ensure host has opened room.', 'er');
+                setConn(false, 'Not found');
+                jBtn.disabled = false;
+                jBtn.textContent = 'Join Room';
+                clearJoinTimers();
+                backToLobby();
                 return;
             }
-            toast('Room not found. Check code or ensure host has opened room.', 'er');
-            setConn(false, 'Not found');
-            jBtn.disabled = false;
-            jBtn.textContent = 'Join Room';
-            backToLobby();
-            return;
-        }
-        toast(`Connection notice: ${err.type}`, 'wa');
+            console.warn('Guest peer notice:', err);
+            toast(`Connection notice: ${err.type}`, 'wa');
+        });
     });
 });
 
@@ -2235,6 +2363,7 @@ function handleHostMsg(data){
 }
 
 function applyGS(gs){
+    S.pendingRemotePlacement = false;
     S.players = gs.players || S.players;
     S.board = gs.board || S.board;
     S.history = gs.history || S.history;
@@ -2364,9 +2493,11 @@ function showRules(){
             <li>Highest score wins the crown 👑!</li>
         </ul>
 
-        <button class="modal-x" onclick="this.closest('.modov').remove()">Got it!</button>
+        <button class="modal-x" id="rulesGotItBtn">Got it!</button>
     </div>`;
     document.body.appendChild(o);
+    const closeBtn = o.querySelector('#rulesGotItBtn');
+    if (closeBtn) closeBtn.addEventListener('click', () => o.remove());
     o.addEventListener('click', e => { if (e.target === o) o.remove(); });
 }
 $('rulesBtn').addEventListener('click', showRules);
