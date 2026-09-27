@@ -141,6 +141,52 @@
       accent-color: var(--yellow-pop);
       cursor: pointer;
     }
+
+    /* Mobile Responsive Optimizations - Zero Overlap */
+    @media (max-width: 768px) {
+      .poker-arena {
+        padding: 6px;
+        gap: 6px;
+      }
+      .poker-table {
+        height: clamp(300px, 42vh, 360px);
+        border-radius: 100px;
+        border-width: 8px;
+        margin: 4px 0;
+      }
+      .poker-seat {
+        min-width: 70px;
+        padding: 4px 6px;
+        gap: 2px;
+      }
+      .poker-seat span:first-child { font-size: 18px !important; }
+      .poker-seat span { font-size: 10px !important; }
+      .seat-p0 { bottom: 6px; }
+      .seat-p1 { left: 6px; }
+      .seat-p4 { right: 6px; }
+      .seat-p2 { top: 6px; left: 24%; }
+      .seat-p3 { top: 6px; right: 24%; }
+
+      .poker-card {
+        width: 44px;
+        height: 64px;
+        padding: 2px 4px;
+        border-radius: 5px;
+        font-size: 11px;
+      }
+      .pot-badge {
+        padding: 4px 12px;
+        font-size: 14px;
+      }
+      .poker-action-bar {
+        padding: 8px 10px;
+        gap: 8px;
+      }
+      .candy-btn {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -155,17 +201,23 @@
     <ul class="nav-games-list">
       <li><a href="uno.html" class="nav-game-link">🎴 Uno</a></li>
       <li><a href="callbreak.html" class="nav-game-link">♠️ Callbreak</a></li>
+      <li><a href="ludo.html" class="nav-game-link">🎲 Ludo</a></li>
+      <li><a href="scribble.html" class="nav-game-link">🎨 Scribble</a></li>
+      <li><a href="wordle.html" class="nav-game-link">🔤 Wordle</a></li>
       <li><a href="poker.html" class="nav-game-link active">🃏 Poker</a></li>
       <li><a href="blackjack.html" class="nav-game-link">🪙 Blackjack</a></li>
       <li><a href="connect4.html" class="nav-game-link">🔴 Connect 4</a></li>
     </ul>
 
-    <div class="nav-profile-pill" id="navProfileBtn">
-      <div class="nav-avatar-circle profile-avatar-display">🦊</div>
-      <span class="profile-name-display">Player</span>
-      <div class="nav-coins-badge">
-        <span>🪙</span>
-        <span class="profile-coins-display">10,000</span>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="candy-btn btn-ghost" id="openThemesBtn" style="padding: 7px 14px; font-size: 13px;">🎨 Themes</button>
+      <div class="nav-profile-pill" id="navProfileBtn">
+        <div class="nav-avatar-circle profile-avatar-display">🦊</div>
+        <span class="profile-name-display">Player</span>
+        <div class="nav-coins-badge">
+          <span>🪙</span>
+          <span class="profile-coins-display">10,000</span>
+        </div>
       </div>
     </div>
   </header>
@@ -263,6 +315,7 @@
 
   <script src="shared/sfx.js"></script>
   <script src="shared/profile.js"></script>
+  <script src="shared/themes.js"></script>
   <script src="shared/network.js"></script>
   <script src="shared/lobby.js"></script>
   <script>
@@ -603,6 +656,13 @@
 
       startNewHand();
     }
+
+    document.getElementById('openThemesBtn')?.addEventListener('click', () => {
+      SFX.tap();
+      if (window.ThemeManager) {
+        window.ThemeManager.showThemeModal();
+      }
+    });
 
     document.getElementById('openPokerLobbyBtn').addEventListener('click', () => {
       SFX.tap();

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Wordle Party — GameHub Arcade</title>
+  <link rel="stylesheet" href="shared/hub.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    .wordle-arena {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 12px;
+      position: relative;
+    }
+
+    /* 6x5 Wordle Board */
+    .wordle-grid {
+      display: grid;
+      grid-template-rows: repeat(6, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+      user-select: none;
+    }
+    .wordle-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .wordle-tile {
+      width: clamp(48px, 14vw, 62px);
+      height: clamp(48px, 14vw, 62px);
+      border: 2px solid var(--border-card);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: clamp(22px, 6vw, 30px);
+      font-weight: 900;
+      color: #fff;
+      text-transform: uppercase;
+      background: rgba(14, 20, 36, 0.7);
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .wordle-tile.pop {
+      transform: scale(1.1);
+      border-color: #ffd000;
+    }
+
+    /* Tile Flip Animation & Colors */
+    .tile-correct {
+      background: #0e853b !important;
+      border-color: #0e853b !important;
+      animation: flipTile 0.5s ease forwards;
+    }
+    .tile-present {
+      background: #d98200 !important;
+      border-color: #d98200 !important;
+      animation: flipTile 0.5s ease forwards;
+    }
+    .tile-absent {
+      background: #32384f !important;
+      border-color: #32384f !important;
+      animation: flipTile 0.5s ease forwards;
+    }
+
+    @keyframes flipTile {
+      0% { transform: rotateX(0deg); }
+      50% { transform: rotateX(90deg); }
+      100% { transform: rotateX(0deg); }
+    }
+
+    /* Virtual Keyboard */
+    .keyboard-wrapper {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .keyboard-row {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      touch-action: manipulation;
+    }
+
+    .key-btn {
+      height: 52px;
+      min-width: clamp(28px, 8.5vw, 42px);
+      border-radius: 8px;
+      background: #252d48;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+      box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+      padding: 0 4px;
+    }
+    .key-btn:hover {
+      background: #343f66;
+      transform: translateY(-2px);
+    }
+    .key-btn:active {
+      transform: translateY(1px);
+    }
+    .key-wide {
+      min-width: clamp(48px, 14vw, 68px);
+      font-size: 13px;
+    }
+
+    .key-correct { background: #0e853b !important; }
+    .key-present { background: #d98200 !important; }
+    .key-absent { background: #161a29 !important; opacity: 0.5; }
+
+    /* Party Race Scoreboard Pill */
+    .party-race-tray {
+      width: 100%;
+      background: rgba(14, 20, 36, 0.85);
+      border: 2px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .party-race-member {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Mobile Responsive Optimizations */
+    @media (max-width: 768px) {
+      .wordle-arena { padding: 4px; }
+      .wordle-grid { gap: 6px; margin: 6px 0; }
+      .wordle-row { gap: 6px; }
+      .key-btn { height: 46px; font-size: 13px; }
+      .key-wide { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GLOBAL ARCADE NAVBAR -->
+  <header class="arcade-navbar">
+    <a href="index.html" class="nav-brand">
+      <span>🎮</span> GameHub
+      <span class="nav-brand-badge" style="background:#0e853b; color:#fff;">Wordle</span>
+    </a>
+
+    <ul class="nav-games-list">
+      <li><a href="uno.html" class="nav-game-link">🎴 Uno</a></li>
+      <li><a href="callbreak.html" class="nav-game-link">♠️ Callbreak</a></li>
+      <li><a href="ludo.html" class="nav-game-link">🎲 Ludo</a></li>
+      <li><a href="scribble.html" class="nav-game-link">🎨 Scribble</a></li>
+      <li><a href="wordle.html" class="nav-game-link active">🔤 Wordle</a></li>
+      <li><a href="poker.html" class="nav-game-link">🃏 Poker</a></li>
+      <li><a href="blackjack.html" class="nav-game-link">🪙 Blackjack</a></li>
+      <li><a href="connect4.html" class="nav-game-link">🔴 Connect 4</a></li>
+    </ul>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="candy-btn btn-ghost" id="openThemesBtn" style="padding: 7px 14px; font-size: 13px;">🎨 Themes</button>
+      <div class="nav-profile-pill" id="navProfileBtn">
+        <div class="nav-avatar-circle profile-avatar-display">🦊</div>
+        <span class="profile-name-display">Player</span>
+        <div class="nav-coins-badge">
+          <span>🪙</span>
+          <span class="profile-coins-display">10,000</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wordle-arena">
+
+    <!-- Top Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; width:100%; flex-wrap:wrap; gap:8px;">
+      <div style="font-weight:800; font-size:16px;">🔤 5-Letter Word Challenge</div>
+      <div style="display:flex; gap:8px;">
+        <button class="candy-btn btn-ghost" id="newWordBtn" style="padding:6px 14px; font-size:12px;">🔄 New Word</button>
+      </div>
+    </div>
+
+    <!-- Live Party Race Stream -->
+    <div class="party-race-tray" id="partyRaceTray">
+      <!-- Injected party members progress -->
+    </div>
+
+    <!-- 6x5 Letter Grid -->
+    <div class="wordle-grid" id="wordleGrid">
+      <!-- 6 Rows of 5 Tiles Generated Dynamically -->
+    </div>
+
+    <!-- Status Alert -->
+    <div id="wordleStatusBanner" style="font-weight:800; font-size:16px; color:var(--yellow-pop); margin-bottom:4px;">
+      Guess the 5-letter hidden word in 6 tries!
+    </div>
+
+    <!-- Virtual Tactile Keyboard -->
+    <div class="keyboard-wrapper" id="keyboardContainer">
+      <div class="keyboard-row" id="kbRow1"></div>
+      <div class="keyboard-row" id="kbRow2"></div>
+      <div class="keyboard-row" id="kbRow3"></div>
+    </div>
+
+  </main>
+
+  <script src="shared/sfx.js"></script>
+  <script src="shared/profile.js"></script>
+  <script src="shared/themes.js"></script>
+  <script src="shared/party.js"></script>
+  <script src="shared/network.js"></script>
+  <script src="shared/lobby.js"></script>
+  <script>
+    /* ===========================================================
+       WORDLE PARTY ENGINE
+       =========================================================== */
+    const WORDS = [
+      'APPLE', 'BRAVE', 'CRANE', 'DREAM', 'EAGLE', 'FLAME', 'GHOST', 'HEART',
+      'IVORY', 'JUICE', 'KNIFE', 'LEMON', 'MAGIC', 'NIGHT', 'OCEAN', 'PIZZA',
+      'QUEEN', 'RIVER', 'STORM', 'TIGER', 'UNCLE', 'VOICE', 'WATER', 'YOUTH',
+      'ZEBRA', 'BEAST', 'CLASH', 'DRIVE', 'EARTH', 'FLASH', 'GIANT', 'HONEY',
+      'INDEX', 'JEWEL', 'LIGHT', 'MONEY', 'NOBLE', 'PIANO', 'ROBOT', 'SPACE',
+      'TRAIN', 'VAPOR', 'WHALE', 'WORLD', 'CHESS', 'SOLAR', 'PRIDE', 'POWER'
+    ];
+
+    let targetWord = 'APPLE';
+    let currentAttempt = 0;
+    let currentGuess = '';
+    let isGameOver = false;
+
+    // Party Members state
+    let partyMembers = [];
+
+    function initWordle() {
+      // Pick random word
+      targetWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+      currentAttempt = 0;
+      currentGuess = '';
+      isGameOver = false;
+
+      buildGrid();
+      buildKeyboard();
+      initPartyStream();
+
+      document.getElementById('wordleStatusBanner').textContent = 'Guess the 5-letter word in 6 tries!';
+    }
+
+    function buildGrid() {
+      const grid = document.getElementById('wordleGrid');
+      grid.innerHTML = '';
+      for (let r = 0; r < 6; r++) {
+        const row = document.createElement('div');
+        row.className = 'wordle-row';
+        row.id = `row_${r}`;
+        for (let c = 0; c < 5; c++) {
+          const tile = document.createElement('div');
+          tile.className = 'wordle-tile';
+          tile.id = `tile_${r}_${c}`;
+          row.appendChild(tile);
+        }
+        grid.appendChild(row);
+      }
+    }
+
+    function buildKeyboard() {
+      const row1 = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'];
+      const row2 = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'];
+      const row3 = ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '⌫'];
+
+      fillKbRow('kbRow1', row1);
+      fillKbRow('kbRow2', row2);
+      fillKbRow('kbRow3', row3);
+    }
+
+    function fillKbRow(rowId, keys) {
+      const container = document.getElementById(rowId);
+      container.innerHTML = '';
+      keys.forEach(k => {
+        const btn = document.createElement('button');
+        btn.className = `key-btn ${k.length > 1 ? 'key-wide' : ''}`;
+        btn.textContent = k;
+        btn.id = `key_${k}`;
+        btn.onclick = () => handleKeyInput(k);
+        container.appendChild(btn);
+      });
+    }
+
+    function handleKeyInput(key) {
+      if (isGameOver) return;
+
+      if (key === 'ENTER') {
+        submitGuess();
+      } else if (key === '⌫' || key === 'BACKSPACE') {
+        if (currentGuess.length > 0) {
+          currentGuess = currentGuess.slice(0, -1);
+          updateCurrentRow();
+          SFX.tap();
+        }
+      } else if (/^[A-Z]$/.test(key)) {
+        if (currentGuess.length < 5) {
+          currentGuess += key;
+          updateCurrentRow();
+          SFX.pop();
+        }
+      }
+    }
+
+    function updateCurrentRow() {
+      for (let c = 0; c < 5; c++) {
+        const tile = document.getElementById(`tile_${currentAttempt}_${c}`);
+        if (c < currentGuess.length) {
+          tile.textContent = currentGuess[c];
+          tile.classList.add('pop');
+        } else {
+          tile.textContent = '';
+          tile.classList.remove('pop');
+        }
+      }
+    }
+
+    function submitGuess() {
+      if (currentGuess.length !== 5) {
+        Toast.show('Word must be 5 letters!', 'wa');
+        SFX.loss();
+        return;
+      }
+
+      const guess = currentGuess;
+      const targetLetters = targetWord.split('');
+      const guessLetters = guess.split('');
+      const resultColors = Array(5).fill('absent');
+
+      // First pass: Match Correct (Green)
+      for (let i = 0; i < 5; i++) {
+        if (guessLetters[i] === targetLetters[i]) {
+          resultColors[i] = 'correct';
+          targetLetters[i] = null; // Mark used
+        }
+      }
+
+      // Second pass: Match Present (Yellow)
+      for (let i = 0; i < 5; i++) {
+        if (resultColors[i] !== 'correct') {
+          const matchIdx = targetLetters.indexOf(guessLetters[i]);
+          if (matchIdx !== -1) {
+            resultColors[i] = 'present';
+            targetLetters[matchIdx] = null; // Mark used
+          }
+        }
+      }
+
+      // Apply animated classes row-by-row
+      for (let c = 0; c < 5; c++) {
+        const tile = document.getElementById(`tile_${currentAttempt}_${c}`);
+        const col = resultColors[c];
+        setTimeout(() => {
+          tile.classList.add(`tile-${col}`);
+          updateKeyColor(guessLetters[c], col);
+        }, c * 100);
+      }
+
+      SFX.cardPlay();
+
+      // Check win or loss
+      if (guess === targetWord) {
+        isGameOver = true;
+        setTimeout(() => {
+          confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+          SFX.win();
+          Profile.recordWin('wordleWins');
+          Toast.show(`🎉 BRILLIANT! Solved in ${currentAttempt + 1} attempts! (+500 Coins)`, 'ok');
+          document.getElementById('wordleStatusBanner').innerHTML = `👑 <b>GENIUS!</b> Solved in ${currentAttempt + 1}/6 tries!`;
+        }, 600);
+        return;
+      }
+
+      currentAttempt++;
+      currentGuess = '';
+
+      if (currentAttempt >= 6) {
+        isGameOver = true;
+        setTimeout(() => {
+          SFX.loss();
+          Toast.show(`Game Over! The word was "${targetWord}"`, 'er');
+          document.getElementById('wordleStatusBanner').innerHTML = `💥 Word was: <b>${targetWord}</b>. Try another!`;
+        }, 600);
+      } else {
+        simulatePartyProgress();
+      }
+    }
+
+    function updateKeyColor(letter, status) {
+      const keyEl = document.getElementById(`key_${letter}`);
+      if (!keyEl) return;
+      if (status === 'correct') {
+        keyEl.className = 'key-btn key-correct';
+      } else if (status === 'present' && !keyEl.classList.contains('key-correct')) {
+        keyEl.className = 'key-btn key-present';
+      } else if (status === 'absent' && !keyEl.classList.contains('key-correct') && !keyEl.classList.contains('key-present')) {
+        keyEl.className = 'key-btn key-absent';
+      }
+    }
+
+    // Party Simulation Stream
+    function initPartyStream() {
+      const party = (window.PartyManager && window.PartyManager.getParty) ? window.PartyManager.getParty() : { members: [] };
+      partyMembers = (party.members || []).map(m => ({
+        ...m,
+        attempt: m.isHost ? 1 : Math.floor(Math.random() * 2) + 1,
+        solved: false
+      }));
+      renderPartyTray();
+    }
+
+    function simulatePartyProgress() {
+      partyMembers.forEach(m => {
+        if (!m.isHost && !m.solved && m.attempt < 6) {
+          m.attempt++;
+          if (m.attempt >= 3 && Math.random() > 0.4) {
+            m.solved = true;
+          }
+        }
+      });
+      renderPartyTray();
+    }
+
+    function renderPartyTray() {
+      const tray = document.getElementById('partyRaceTray');
+      tray.innerHTML = '';
+      partyMembers.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'party-race-member';
+        const status = m.solved ? '✅ Solved!' : (m.isHost ? `Try ${currentAttempt + 1}/6` : `Try ${m.attempt}/6`);
+        item.innerHTML = `
+          <span>${m.avatar}</span>
+          <span>${m.name}:</span>
+          <span style="color: ${m.solved ? '#26e689' : 'var(--yellow-pop)'}; font-weight:800;">${status}</span>
+        `;
+        tray.appendChild(item);
+      });
+    }
+
+    // Physical Keyboard Listener
+    window.addEventListener('keydown', e => {
+      if (isGameOver) return;
+      if (e.key === 'Enter') handleKeyInput('ENTER');
+      else if (e.key === 'Backspace') handleKeyInput('⌫');
+      else if (/^[a-zA-Z]$/.test(e.key)) handleKeyInput(e.key.toUpperCase());
+    });
+
+    document.getElementById('newWordBtn').addEventListener('click', () => {
+      SFX.tap();
+      initWordle();
+    });
+
+    document.getElementById('openThemesBtn')?.addEventListener('click', () => {
+      SFX.tap();
+      if (window.ThemeManager) {
+        window.ThemeManager.showThemeModal();
+      }
+    });
+
+    window.addEventListener('load', initWordle);
+  </script>
+</body>
+</html>

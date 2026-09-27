@@ -32,11 +32,11 @@
   --text-muted: #6f7f9f;
   --gold: #ffbe1a;
 
-  /* Card Suits & Colors */
-  --uno-red: #ff3355;
-  --uno-blue: #00aaff;
-  --uno-green: #00d66c;
-  --uno-yellow: #ffcc00;
+  /* Card Suits & Colors: Deep, High-Contrast & Clearly Distinguishable */
+  --uno-red: #c91432;      /* Deep Crimson / Ruby */
+  --uno-blue: #0c58b8;     /* Rich Royal Sapphire Blue */
+  --uno-green: #0b8a3e;    /* Deep Forest Emerald Green */
+  --uno-yellow: #d98200;   /* Deep Amber Golden Ochre */
 
   /* UI Tokens */
   --radius-sm: 12px;
@@ -477,6 +477,18 @@ body {
 .card-connect4:hover { border-color: var(--lime-pop); box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3); }
 .card-connect4 .game-icon-box { background: linear-gradient(135deg, #0080ff, #ff0055); }
 
+.card-ludo { border-color: rgba(230, 126, 34, 0.4); }
+.card-ludo:hover { border-color: #f39c12; box-shadow: 0 10px 30px rgba(230, 126, 34, 0.35); }
+.card-ludo .game-icon-box { background: linear-gradient(135deg, #e67e22, #d35400); }
+
+.card-scribble { border-color: rgba(224, 86, 253, 0.4); }
+.card-scribble:hover { border-color: #e056fd; box-shadow: 0 10px 30px rgba(224, 86, 253, 0.35); }
+.card-scribble .game-icon-box { background: linear-gradient(135deg, #be2edd, #e056fd); }
+
+.card-wordle { border-color: rgba(14, 133, 59, 0.4); }
+.card-wordle:hover { border-color: #2ecc71; box-shadow: 0 10px 30px rgba(46, 204, 113, 0.35); }
+.card-wordle .game-icon-box { background: linear-gradient(135deg, #0e853b, #27ae60); }
+
 /* ==========================================================================
    MODALS (PROFILE & ROOM CREATION)
    ========================================================================== */
@@ -704,4 +716,326 @@ body {
   font-size: 13px;
   outline: none;
 }
+
+/* ==========================================================================
+   5 DIVERSE THEMES (VISUALS & ANIMATIONS)
+   ========================================================================== */
+
+/* 1. Theme: Neon Party (Default) */
+body.theme-party {
+  --bg-deep: #0e1124;
+  --bg-dark: #141933;
+  --bg-card: #1c2347;
+  --border-card: #2e3a75;
+}
+
+/* 2. Theme: Cyberpunk Neon */
+body.theme-cyber {
+  --bg-deep: #06070d;
+  --bg-dark: #0d0f1a;
+  --bg-card: #121526;
+  --border-card: #3f1d82;
+  --cyan-pop: #00f0ff;
+  --pink-pop: #ff007f;
+  --yellow-pop: #ffe600;
+  background-image: 
+    linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 127, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 50% 20%, rgba(157, 78, 221, 0.25) 0%, transparent 60%);
+  background-size: 40px 40px, 40px 40px, 100% 100%;
+}
+body.theme-cyber .candy-btn {
+  border-radius: 8px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* 3. Theme: Royal Velvet Casino */
+body.theme-casino {
+  --bg-deep: #07170f;
+  --bg-dark: #0b2418;
+  --bg-card: #103322;
+  --border-card: #215e3f;
+  --yellow-pop: #ffd700;
+  --cyan-pop: #52b788;
+  --pink-pop: #d90429;
+  background-image: 
+    radial-gradient(circle at 50% 30%, rgba(33, 94, 63, 0.3) 0%, transparent 70%),
+    radial-gradient(circle at 10% 90%, rgba(255, 215, 0, 0.08) 0%, transparent 50%);
+}
+body.theme-casino .poker-table,
+body.theme-casino .cb-table {
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.2) !important;
+}
+
+/* 4. Theme: Volcanic Magma */
+body.theme-magma {
+  --bg-deep: #100606;
+  --bg-dark: #1a0a0a;
+  --bg-card: #260e0e;
+  --border-card: #5e1c1c;
+  --yellow-pop: #ffaa00;
+  --cyan-pop: #ff5400;
+  --pink-pop: #ff0054;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(255, 84, 0, 0.22) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 0, 84, 0.18) 0%, transparent 50%);
+}
+body.theme-magma .candy-btn {
+  box-shadow: 0 6px 0 #570000, 0 8px 25px rgba(255, 69, 0, 0.5) !important;
+}
+
+/* 5. Theme: Glacial Frost */
+body.theme-frost {
+  --bg-deep: #05131f;
+  --bg-dark: #092033;
+  --bg-card: #0d2e49;
+  --border-card: #1c527e;
+  --cyan-pop: #48cae4;
+  --yellow-pop: #90e0ef;
+  --pink-pop: #0077b6;
+  background-image: 
+    radial-gradient(circle at 50% 10%, rgba(72, 202, 228, 0.22) 0%, transparent 60%),
+    radial-gradient(circle at 90% 90%, rgba(0, 119, 182, 0.2) 0%, transparent 50%);
+}
+
+/* ==========================================================================
+   CUSTOMIZABLE CARD BACK PATTERNS
+   ========================================================================== */
+.card-back {
+  transition: all 0.3s ease;
+}
+
+/* Candy Party Card Back */
+body.card-back-party .card-back {
+  background: linear-gradient(135deg, #ff1493 25%, #d10068 25%, #d10068 50%, #ff1493 50%, #ff1493 75%, #d10068 75%) !important;
+  background-size: 20px 20px !important;
+  border: 3px solid #fff !important;
+}
+
+/* Cyber Grid Card Back */
+body.card-back-cyber .card-back {
+  background: #090a14 !important;
+  border: 2px solid var(--cyan-pop) !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.4) !important;
+  background-image: linear-gradient(rgba(0, 240, 255, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 240, 255, 0.2) 1px, transparent 1px) !important;
+  background-size: 10px 10px !important;
+}
+
+/* Royal Casino Card Back */
+body.card-back-casino .card-back {
+  background: radial-gradient(circle, #ffd700 10%, #114227 11%, #114227 100%) !important;
+  border: 3px solid #ffd700 !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+}
+
+/* Volcanic Magma Card Back */
+body.card-back-magma .card-back {
+  background: linear-gradient(180deg, #1c0505, #591010) !important;
+  border: 2px solid #ff4500 !important;
+  box-shadow: 0 0 14px rgba(255, 69, 0, 0.5) !important;
+}
+
+/* Glacial Frost Card Back */
+body.card-back-frost .card-back {
+  background: linear-gradient(135deg, #023e8a, #0077b6) !important;
+  border: 2px solid #90e0ef !important;
+  box-shadow: 0 0 14px rgba(144, 224, 239, 0.4) !important;
+}
+
+/* ==========================================================================
+   THEME SELECTOR MODAL COMPONENTS
+   ========================================================================== */
+.themes-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 10px 0 16px;
+}
+
+.theme-card-option {
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.theme-card-option:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.theme-card-option.selected {
+  border-color: var(--yellow-pop);
+  background: rgba(255, 208, 0, 0.14);
+  box-shadow: 0 6px 14px rgba(255, 208, 0, 0.25);
+  transform: scale(1.04);
+}
+
+.cardbacks-selector-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 8px 4px 14px;
+}
+
+.cardback-chip-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 2px solid var(--border-card);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.cardback-chip-option.selected {
+  border-color: var(--cyan-pop);
+  background: rgba(0, 229, 255, 0.15);
+}
+
+.cardback-mini-preview {
+  width: 44px;
+  height: 62px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS & ZERO-OVERLAP SYSTEM
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Prevent horizontal screen shift */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+
+  /* Compact top bar */
+  .arcade-navbar {
+    padding: 6px 10px;
+  }
+  .nav-brand {
+    font-size: 18px;
+  }
+  .nav-game-link {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .nav-profile-pill {
+    padding: 4px 8px;
+  }
+  .profile-name-display {
+    display: none;
+  }
+
+  /* Zero-Overlap Proportional Table Scaling */
+  .poker-table,
+  .cb-table,
+  .bj-table {
+    height: clamp(340px, 48vh, 440px) !important;
+    border-width: 8px !important;
+    border-radius: 36px !important;
+    margin: 6px 0 !important;
+  }
+
+  /* Seats: Compact Pill Position so they never hit center */
+  .table-seat,
+  .poker-seat {
+    padding: 4px 8px !important;
+    min-width: unset !important;
+    gap: 6px !important;
+    font-size: 11px !important;
+    border-width: 2px !important;
+  }
+  .table-seat span:first-child,
+  .poker-seat span:first-child {
+    font-size: 18px !important;
+  }
+  .seat-north { top: 6px !important; }
+  .seat-south { bottom: 6px !important; }
+  .seat-west { left: 6px !important; }
+  .seat-east { right: 6px !important; }
+
+  /* Center Trick Slot Area */
+  .trick-arena {
+    width: 160px !important;
+    height: 160px !important;
+  }
+  .trick-slot {
+    width: 48px !important;
+    height: 70px !important;
+  }
+
+  /* Playing Card Sizes on Mobile */
+  .p-card,
+  .poker-card,
+  .bj-card {
+    width: 48px !important;
+    height: 72px !important;
+    padding: 3px 4px !important;
+    border-radius: 6px !important;
+  }
+  .p-card-val,
+  .poker-card div:first-child {
+    font-size: 11px !important;
+  }
+  .p-card-center {
+    font-size: 18px !important;
+  }
+
+  /* Uno Cards on Mobile */
+  .uno-card {
+    width: 58px !important;
+    height: 86px !important;
+    border-radius: 8px !important;
+  }
+  .uno-card-val {
+    font-size: 22px !important;
+  }
+
+  /* Responsive Hand Card Fanning with Overlap so all 13 cards fit! */
+  .cb-hand-cards,
+  .hand-cards-container {
+    padding: 12px 6px 6px !important;
+    justify-content: center !important;
+  }
+  .cb-hand-cards .p-card:not(:first-child) {
+    margin-left: -22px !important;
+  }
+  .cb-hand-cards .p-card:hover,
+  .cb-hand-cards .p-card:active {
+    transform: translateY(-26px) scale(1.18) !important;
+    z-index: 100 !important;
+    margin-right: 10px !important;
+  }
+
+  /* Action Buttons & Chips on Mobile */
+  .bj-controls-bar,
+  .poker-action-bar,
+  .hand-area {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+  .bet-chip {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 11px !important;
+  }
+  .candy-btn {
+    padding: 9px 16px !important;
+    font-size: 13px !important;
+  }
+}
+
 

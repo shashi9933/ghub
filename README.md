@@ -4,49 +4,58 @@ An All-in-One Instant Web Arcade featuring real-time multiplayer card and board 
 
 ---
 
-## 🕹️ Games Included
+## 🕹️ 8 Games Included
 
 ### 🎴 1. Uno Party (`uno.html`)
-- Classic 108-card Uno matching game (Red, Blue, Green, Yellow).
-- Action cards: Skip (🚫), Reverse (🔄), Draw Two (+2).
-- Wild cards: Wild (🌈), Wild Draw Four (+4) with interactive color selection.
-- Tactical **UNO!** call button when down to 1 card.
-- 2–4 Players with smart AI bots and room code multiplayer.
+- Classic 108-card Uno matching game with deep high-contrast colors (Red, Blue, Green, Yellow).
+- Action cards: Skip (🚫), Reverse (🔄), Draw Two (+2), Wild (🌈), Wild Draw Four (+4).
+- Tactical **UNO!** call button and mobile card fanning.
 
 ### ♠️ 2. Callbreak (कॉल ब्रेक - `callbreak.html`)
-- Authentic South Asian 4-player trick-taking card game.
-- **Spades (♠️)** are permanent trumps.
-- Bidding phase: Predict exact tricks to win (1–13).
-- Strict legal-move enforcement: Must follow led suit, beat highest card, or trump with Spade.
-- Comprehensive 5-round scoreboard tracking running scores.
+- Authentic South Asian 4-player trick-taking card game with permanent Spade (♠️) trumps.
+- Customizable Call Size (1–8) for players and bots with interactive steppers.
+- 13-card mobile zero-overlap fanning and 5-round scoreboard.
 
-### 🃏 3. Texas Hold'em Poker (`poker.html`)
+### 🎲 3. Ludo Classic (`ludo.html`)
+- Classic 4-player board game (Red, Green, Yellow, Blue).
+- Animated 3D dice rolls, bonus turns on 6, knocking out opponent tokens, safe stars, and home race.
+
+### 🎨 4. Scribble Party (`scribble.html`)
+- Interactive draw and guess party game!
+- Full HTML5 drawing canvas with color palette, brush sizes, and touch support.
+- Live guess chat stream with bot drawing AI simulation and real-time point scoring.
+
+### 🔤 5. Wordle Party (`wordle.html`)
+- 5-letter word deduction challenge in 6 attempts.
+- 3D flip tile animations, tactile virtual keyboard, and live multiplayer party race stream.
+
+### 🃏 6. Texas Hold'em Poker (`poker.html`)
 - Tournament No-Limit Texas Hold'em on a realistic green felt oval table.
-- Secret 2-card hole hands + 5 community cards (Flop, Turn, River).
-- Blinds (Small / Big), chip slider, Check, Call, Raise, Fold.
-- Real-time 5-card poker hand strength evaluator (Flush, Straight, Full House, Two Pair, etc.).
-- Bot AI with bluffing probabilities.
+- Hole cards, Flop, Turn, River, blinds, chip betting slider, and automatic hand evaluation.
 
-### 🪙 4. Blackjack 21 (`blackjack.html`)
-- Casino classic table game against the dealer.
-- Actions: Hit, Stand, Double Down.
-- Chip trays ($25, $50, $100, $500).
+### 🪙 7. Blackjack 21 (`blackjack.html`)
+- Casino classic table game against the dealer with Hit, Stand, and Double Down.
 - Natural Blackjack pays 3:2; Dealer stands on 17.
 
-### 🔴 5. Connect 4 (`connect4.html`)
-- 7 columns × 6 rows tactile vertical disc drop grid.
-- Smooth gravity drop animations with physics clink SFX.
-- Smart Minimax AI with alpha-beta pruning.
-- 2-Player local pass & play.
+### 🔴 8. Connect 4 (`connect4.html`)
+- 7×6 tactile vertical disc drop grid with gravity drop physics and Minimax AI.
 
 ---
 
-## 🎨 Visual Design & Features
+## 🎉 Party & Multiplayer Lounge (`shared/party.js`)
+- **Homepage Party Lounge**: Assemble your crew with real players and customizable AI bots (`RoboAce`, `FoxyKing`, `PandaPro`, `LuckyCat`).
+- **Shareable Room Link**: Invite friends via direct room link or room code (`PARTY-XXXX`).
+- **One-Click Party Launch**: Launching any game carries all party members directly into the game seats!
 
-- **Fall Guys Party Aesthetic**: Chunky pill badges, bouncy candy buttons, vibrant gradients, and celebratory confetti.
-- **Shared Player Profile (`shared/profile.js`)**: 16 customizable bean avatars (🦊, 🦁, 🐼, 🤖, 👑, etc.), custom nicknames, and cross-game coin bank.
-- **Pure WebAudio Synthesizer (`shared/sfx.js`)**: Tactile card slides, chip clinks, disc drop clonks, victory fanfares, and Uno trumpet alerts without any external audio files.
-- **Clean URL Routing (`vercel.json`)**: Direct routes for `/uno`, `/callbreak`, `/poker`, `/blackjack`, `/connect4`.
+---
+
+## 🎨 5 Immersive Themes & Card Backs (`shared/themes.js`)
+- 🎪 **Neon Party**: Electric cyan & magenta neon gradients with confetti aura.
+- 🌌 **Cyberpunk Matrix**: Animated cyber-grid floor scanlines and laser card borders.
+- 🌿 **Royal Velvet Casino**: Emerald & gold luxury casino felt with breathing ambient sparkles.
+- 🔥 **Volcanic Magma**: Deep obsidian and volcanic embers with magma pulse glow.
+- ❄️ **Glacial Frost**: Crystal azure ice floe with winter aurora glow.
+- **5 Custom Card Back Patterns**: Neon Retro, Cyber Matrix, Royal Filigree, Magma Dragonscale, Glacial Crystal.
 
 ---
 

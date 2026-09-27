@@ -149,14 +149,14 @@
       padding: 16px 8px 6px;
     }
 
-    /* Bidding Modal */
-    .bid-btn-grid {
+    /* Call Modal & Stepper Styling */
+    .call-btn-grid, .bid-btn-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
       margin-top: 14px;
     }
-    .bid-btn {
+    .call-btn, .bid-btn {
       padding: 14px;
       border-radius: 12px;
       font-size: 18px;
@@ -167,10 +167,57 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    .bid-btn:hover {
+    .call-btn:hover, .bid-btn:hover {
       border-color: var(--cyan-pop);
       background: rgba(0, 229, 255, 0.2);
       transform: scale(1.05);
+    }
+    .call-stepper-box {
+      background: rgba(255,255,255,0.04);
+      border: 2px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+    }
+    .call-stepper-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .call-stepper-ctrls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .call-step-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--bg-card);
+      border: 2px solid var(--border-card);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.2s;
+    }
+    .call-step-btn:hover {
+      border-color: var(--cyan-pop);
+      background: rgba(0, 229, 255, 0.2);
+    }
+    .call-step-val {
+      min-width: 28px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--yellow-pop);
     }
 
     /* Scoreboard Table */
@@ -186,6 +233,78 @@
       text-align: center;
     }
     .score-table th { background: rgba(255,255,255,0.08); font-weight: 800; }
+
+    /* Mobile Responsive Optimizations - Zero Overlap & Fanned Hand */
+    @media (max-width: 768px) {
+      .cb-arena {
+        padding: 6px;
+        gap: 6px;
+      }
+      .cb-table {
+        height: clamp(300px, 42vh, 360px);
+        border-radius: 20px;
+        border-width: 4px;
+        margin: 4px 0;
+      }
+      .table-seat {
+        padding: 4px 8px;
+        gap: 6px;
+        border-radius: 8px;
+        border-width: 2px;
+      }
+      .table-seat span:first-child { font-size: 18px !important; }
+      .seat-north { top: 6px; }
+      .seat-west { left: 6px; }
+      .seat-east { right: 6px; }
+      .seat-south { bottom: 6px; }
+
+      .trick-arena {
+        width: 140px;
+        height: 140px;
+      }
+      .trick-slot {
+        width: 46px;
+        height: 68px;
+      }
+
+      .p-card {
+        width: 46px;
+        height: 68px;
+        padding: 2px 4px;
+        border-radius: 6px;
+      }
+      .p-card-val { font-size: 11px; }
+      .p-card-suit { font-size: 10px; }
+      .p-card-center { font-size: 16px; }
+
+      .cb-hand-container {
+        padding: 6px;
+        gap: 4px;
+      }
+      /* 13-card fanning on mobile so all cards are simultaneously visible */
+      .cb-hand-cards {
+        padding: 12px 2px 4px;
+        gap: 0;
+        justify-content: flex-start;
+      }
+      .cb-hand-cards .p-card:not(:first-child) {
+        margin-left: -24px !important;
+      }
+      .cb-hand-cards .p-card:hover,
+      .cb-hand-cards .p-card:active {
+        margin-right: 18px;
+        transform: translateY(-16px) scale(1.18);
+        z-index: 60;
+      }
+      .call-btn-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .call-btn {
+        padding: 10px;
+        font-size: 16px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -200,17 +319,23 @@
     <ul class="nav-games-list">
       <li><a href="uno.html" class="nav-game-link">🎴 Uno</a></li>
       <li><a href="callbreak.html" class="nav-game-link active">♠️ Callbreak</a></li>
+      <li><a href="ludo.html" class="nav-game-link">🎲 Ludo</a></li>
+      <li><a href="scribble.html" class="nav-game-link">🎨 Scribble</a></li>
+      <li><a href="wordle.html" class="nav-game-link">🔤 Wordle</a></li>
       <li><a href="poker.html" class="nav-game-link">🃏 Poker</a></li>
       <li><a href="blackjack.html" class="nav-game-link">🪙 Blackjack</a></li>
       <li><a href="connect4.html" class="nav-game-link">🔴 Connect 4</a></li>
     </ul>
 
-    <div class="nav-profile-pill" id="navProfileBtn">
-      <div class="nav-avatar-circle profile-avatar-display">🦊</div>
-      <span class="profile-name-display">Player</span>
-      <div class="nav-coins-badge">
-        <span>🪙</span>
-        <span class="profile-coins-display">10,000</span>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="candy-btn btn-ghost" id="openThemesBtn" style="padding: 7px 14px; font-size: 13px;">🎨 Themes</button>
+      <div class="nav-profile-pill" id="navProfileBtn">
+        <div class="nav-avatar-circle profile-avatar-display">🦊</div>
+        <span class="profile-name-display">Player</span>
+        <div class="nav-coins-badge">
+          <span>🪙</span>
+          <span class="profile-coins-display">10,000</span>
+        </div>
       </div>
     </div>
   </header>
@@ -218,11 +343,12 @@
   <main class="cb-arena">
 
     <!-- Top Status Bar -->
-    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-      <div style="font-weight:800; font-size:16px;">
-        ♠️ Spades are Permanent Trump &bull; <span id="roundIndicator" style="color:var(--yellow-pop);">Round 1 of 5</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; width:100%; flex-wrap:wrap; gap:8px;">
+      <div style="font-weight:800; font-size:15px;">
+        ♠️ Spades Permanent Trump &bull; <span id="roundIndicator" style="color:var(--yellow-pop);">Round 1 of 5</span>
       </div>
       <div style="display:flex; gap:8px;">
+        <button class="candy-btn btn-ghost" id="editCallsBtn" style="padding:6px 14px; font-size:13px;">✏️ Edit Calls</button>
         <button class="candy-btn btn-ghost" id="openCbLobbyBtn" style="padding:6px 14px; font-size:13px;">⚙️ Room Setup</button>
         <button class="candy-btn btn-ghost" id="viewScoresBtn" style="padding:6px 14px; font-size:13px;">📊 Scoreboard</button>
       </div>
@@ -235,7 +361,7 @@
         <span style="font-size:24px;">🤖</span>
         <div>
           <div style="font-weight:700; font-size:13px;" id="nameNorth">RoboAce</div>
-          <div style="font-size:11px; color:var(--yellow-pop);"><span id="bidNorth">Bid: -</span> | Won: <span id="wonNorth">0</span></div>
+          <div style="font-size:11px; color:var(--yellow-pop);"><span id="callNorth">Call: -</span> | Won: <span id="wonNorth">0</span></div>
         </div>
       </div>
 
@@ -244,7 +370,7 @@
         <span style="font-size:24px;">🦊</span>
         <div>
           <div style="font-weight:700; font-size:13px;" id="nameWest">FoxyKing</div>
-          <div style="font-size:11px; color:var(--yellow-pop);"><span id="bidWest">Bid: -</span> | Won: <span id="wonWest">0</span></div>
+          <div style="font-size:11px; color:var(--yellow-pop);"><span id="callWest">Call: -</span> | Won: <span id="wonWest">0</span></div>
         </div>
       </div>
 
@@ -253,7 +379,7 @@
         <span style="font-size:24px;">🐼</span>
         <div>
           <div style="font-weight:700; font-size:13px;" id="nameEast">PandaPro</div>
-          <div style="font-size:11px; color:var(--yellow-pop);"><span id="bidEast">Bid: -</span> | Won: <span id="wonEast">0</span></div>
+          <div style="font-size:11px; color:var(--yellow-pop);"><span id="callEast">Call: -</span> | Won: <span id="wonEast">0</span></div>
         </div>
       </div>
 
@@ -262,7 +388,7 @@
         <span style="font-size:24px;" class="profile-avatar-display">🦊</span>
         <div>
           <div style="font-weight:700; font-size:13px;" class="profile-name-display">You</div>
-          <div style="font-size:11px; color:var(--yellow-pop);"><span id="bidSouth">Bid: -</span> | Won: <span id="wonSouth">0</span></div>
+          <div style="font-size:11px; color:var(--yellow-pop);"><span id="callSouth">Call: -</span> | Won: <span id="wonSouth">0</span></div>
         </div>
       </div>
 
@@ -277,7 +403,7 @@
 
     <!-- Status Message -->
     <div id="cbStatusBanner" style="font-weight:800; font-size:17px; color:var(--cyan-pop); margin-bottom:6px;">
-      ♠️ Welcome to Callbreak! Bidding will begin.
+      ♠️ Welcome to Callbreak! Call phase will begin.
     </div>
 
     <!-- Human Player Hand Area -->
@@ -293,13 +419,31 @@
 
   </main>
 
-  <!-- Bidding Modal -->
-  <div class="modal-overlay" id="bidModal" style="display:none;">
-    <div class="modal-box" style="text-align: center;">
-      <h2 class="modal-title">♠️ Place Your Bid (Call)</h2>
-      <p style="color:var(--text-sub); font-size:14px;">How many tricks do you predict you will win this round? (1 to 8):</p>
-      <div class="bid-btn-grid" id="bidBtnGrid">
-        <!-- 1 to 8 buttons -->
+  <!-- Call Selection & Customizer Modal -->
+  <div class="modal-overlay" id="callModal" style="display:none;">
+    <div class="modal-box" style="text-align: center; max-width: 520px;">
+      <h2 class="modal-title">♠️ Place Your Call</h2>
+      <p style="color:var(--text-sub); font-size:14px; margin-bottom: 12px;">
+        Choose trick call (1–8) or fine-tune call sizes for bots & yourself:
+      </p>
+
+      <!-- Quick 1 to 8 buttons -->
+      <div class="call-btn-grid" id="callBtnGrid">
+        <!-- Injected buttons 1 to 8 -->
+      </div>
+
+      <!-- Steppers to edit calls for all bots & player -->
+      <div class="call-stepper-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 13px; font-weight: 800; color: var(--cyan-pop);">🛠️ Edit Call Sizes for All Players & Bots:</span>
+          <span style="font-size: 11px; color: var(--text-muted);">Adjust with + / -</span>
+        </div>
+        <div id="callSteppersList">
+          <!-- Injected dynamically for South, West, North, East -->
+        </div>
+        <button class="candy-btn btn-cyan" id="confirmCustomCallsBtn" style="width: 100%; margin-top: 10px; padding: 10px; font-size: 14px;">
+          ✅ Confirm All Calls & Start Play
+        </button>
       </div>
     </div>
   </div>
@@ -313,10 +457,10 @@
         <thead>
           <tr>
             <th>Round</th>
-            <th>You</th>
-            <th>FoxyKing</th>
-            <th>RoboAce</th>
-            <th>PandaPro</th>
+            <th>You (Call/Won)</th>
+            <th id="sbHeaderWest">FoxyKing</th>
+            <th id="sbHeaderNorth">RoboAce</th>
+            <th id="sbHeaderEast">PandaPro</th>
           </tr>
         </thead>
         <tbody id="scoreboardBody">
@@ -328,6 +472,7 @@
 
   <script src="shared/sfx.js"></script>
   <script src="shared/profile.js"></script>
+  <script src="shared/themes.js"></script>
   <script src="shared/network.js"></script>
   <script src="shared/lobby.js"></script>
   <script>
@@ -345,10 +490,10 @@
     
     // Players order: 0: South (Human), 1: West, 2: North, 3: East
     let players = [
-      { id: 'p0', seat: 'South', name: 'You', isHuman: true, hand: [], bid: 0, won: 0, totalScore: 0 },
-      { id: 'p1', seat: 'West', name: 'FoxyKing 🦊', isHuman: false, hand: [], bid: 0, won: 0, totalScore: 0 },
-      { id: 'p2', seat: 'North', name: 'RoboAce 🤖', isHuman: false, hand: [], bid: 0, won: 0, totalScore: 0 },
-      { id: 'p3', seat: 'East', name: 'PandaPro 🐼', isHuman: false, hand: [], bid: 0, won: 0, totalScore: 0 }
+      { id: 'p0', seat: 'South', name: 'You', isHuman: true, hand: [], call: 0, bid: 0, won: 0, totalScore: 0 },
+      { id: 'p1', seat: 'West', name: 'FoxyKing 🦊', isHuman: false, hand: [], call: 0, bid: 0, won: 0, totalScore: 0 },
+      { id: 'p2', seat: 'North', name: 'RoboAce 🤖', isHuman: false, hand: [], call: 0, bid: 0, won: 0, totalScore: 0 },
+      { id: 'p3', seat: 'East', name: 'PandaPro 🐼', isHuman: false, hand: [], call: 0, bid: 0, won: 0, totalScore: 0 }
     ];
 
     let currentTurn = 0;
@@ -381,6 +526,7 @@
       // Deal 13 cards to each player
       players.forEach(p => {
         p.hand = [];
+        p.call = 0;
         p.bid = 0;
         p.won = 0;
       });
@@ -398,7 +544,7 @@
       SFX.cardDeal();
       renderAll();
 
-      promptBidding();
+      promptCalling();
     }
 
     function sortHand(hand) {
@@ -411,36 +557,96 @@
       });
     }
 
-    function promptBidding() {
-      document.getElementById('cbStatusBanner').textContent = '♠️ Bidding Phase: Choose your trick bid (1–8)';
-      // Bots auto-calculate their bid based on Aces, Kings, and high Spades
-      for (let i = 1; i < 4; i++) {
-        players[i].bid = calculateBotBid(players[i].hand);
-        document.getElementById(`bid${players[i].seat}`).textContent = `Bid: ${players[i].bid}`;
-      }
-
-      // Show modal for human player
-      const grid = document.getElementById('bidBtnGrid');
-      grid.innerHTML = '';
-      for (let b = 1; b <= 8; b++) {
-        const btn = document.createElement('button');
-        btn.className = 'bid-btn';
-        btn.textContent = b;
-        btn.onclick = () => {
-          SFX.tap();
-          players[0].bid = b;
-          document.getElementById('bidSouth').textContent = `Bid: ${b}`;
-          document.getElementById('bidModal').style.display = 'none';
-          trickLeader = 0;
-          currentTurn = 0;
-          startTrick();
-        };
-        grid.appendChild(btn);
-      }
-      document.getElementById('bidModal').style.display = 'grid';
+    function updateSeatCallDisplay(p) {
+      const el = document.getElementById(`call${p.seat}`) || document.getElementById(`bid${p.seat}`);
+      if (el) el.textContent = `Call: ${p.call || p.bid || '-'}`;
     }
 
-    function calculateBotBid(hand) {
+    function promptCalling() {
+      document.getElementById('cbStatusBanner').textContent = '♠️ Call Phase: Choose your trick call (1–8) or fine-tune bot calls';
+      // Bots auto-calculate their call based on Aces, Kings, and high Spades
+      for (let i = 1; i < 4; i++) {
+        players[i].call = calculateBotCall(players[i].hand);
+        players[i].bid = players[i].call;
+        updateSeatCallDisplay(players[i]);
+      }
+      if (!players[0].call) {
+        players[0].call = 3;
+        players[0].bid = 3;
+      }
+      openCallModal();
+    }
+    const promptBidding = promptCalling; // Backward compatibility
+
+    function openCallModal() {
+      const grid = document.getElementById('callBtnGrid') || document.getElementById('bidBtnGrid');
+      if (grid) {
+        grid.innerHTML = '';
+        for (let b = 1; b <= 8; b++) {
+          const btn = document.createElement('button');
+          btn.className = 'call-btn';
+          btn.textContent = b;
+          btn.onclick = () => {
+            SFX.tap();
+            players[0].call = b;
+            players[0].bid = b;
+            updateSeatCallDisplay(players[0]);
+            closeCallModal();
+            trickLeader = 0;
+            currentTurn = 0;
+            startTrick();
+          };
+          grid.appendChild(btn);
+        }
+      }
+
+      // Populate steppers list for all 4 players/bots
+      const steppersList = document.getElementById('callSteppersList');
+      if (steppersList) {
+        steppersList.innerHTML = '';
+        players.forEach((p, idx) => {
+          const row = document.createElement('div');
+          row.className = 'call-stepper-row';
+          const avatar = idx === 0 ? '🦊' : (idx === 1 ? '🦊' : (idx === 2 ? '🤖' : '🐼'));
+          row.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">${avatar}</span>
+              <span style="font-weight:700; font-size:13px;">${p.name} ${idx === 0 ? '(You)' : ''}</span>
+            </div>
+            <div class="call-stepper-ctrls">
+              <button class="call-step-btn" data-idx="${idx}" data-delta="-1">-</button>
+              <span class="call-step-val" id="stepCallVal_${idx}">${p.call || 1}</span>
+              <button class="call-step-btn" data-idx="${idx}" data-delta="1">+</button>
+            </div>
+          `;
+          steppersList.appendChild(row);
+        });
+
+        steppersList.querySelectorAll('.call-step-btn').forEach(btn => {
+          btn.onclick = () => {
+            SFX.tap();
+            const idx = parseInt(btn.dataset.idx);
+            const delta = parseInt(btn.dataset.delta);
+            const current = players[idx].call || 1;
+            const updated = Math.max(1, Math.min(10, current + delta));
+            players[idx].call = updated;
+            players[idx].bid = updated;
+            document.getElementById(`stepCallVal_${idx}`).textContent = updated;
+            updateSeatCallDisplay(players[idx]);
+          };
+        });
+      }
+
+      const modal = document.getElementById('callModal') || document.getElementById('bidModal');
+      if (modal) modal.style.display = 'grid';
+    }
+
+    function closeCallModal() {
+      const modal = document.getElementById('callModal') || document.getElementById('bidModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function calculateBotCall(hand) {
       let count = 0;
       hand.forEach(c => {
         if (c.suit === 'S' && c.rank >= 11) count++; // High spade
@@ -449,6 +655,7 @@
       });
       return Math.max(1, Math.min(6, count));
     }
+    const calculateBotBid = calculateBotCall; // Backward compatibility
 
     function startTrick() {
       currentTrick = [];
@@ -578,14 +785,15 @@
     }
 
     function finishRound() {
-      // Calculate scores
+      // Calculate scores based on Call & Won
       const rScore = {};
       players.forEach(p => {
         let pts = 0;
-        if (p.won >= p.bid) {
-          pts = p.bid + (p.won - p.bid) * 0.1;
+        const callTarget = p.call || p.bid || 1;
+        if (p.won >= callTarget) {
+          pts = callTarget + (p.won - callTarget) * 0.1;
         } else {
-          pts = -p.bid;
+          pts = -callTarget;
         }
         pts = Math.round(pts * 10) / 10;
         p.totalScore = Math.round((p.totalScore + pts) * 10) / 10;
@@ -707,6 +915,27 @@
       document.getElementById('scoresModal').style.display = 'none';
     });
 
+    document.getElementById('editCallsBtn')?.addEventListener('click', () => {
+      SFX.tap();
+      openCallModal();
+    });
+
+    document.getElementById('confirmCustomCallsBtn')?.addEventListener('click', () => {
+      SFX.tap();
+      players.forEach(p => updateSeatCallDisplay(p));
+      closeCallModal();
+      trickLeader = 0;
+      currentTurn = 0;
+      startTrick();
+    });
+
+    document.getElementById('openThemesBtn')?.addEventListener('click', () => {
+      SFX.tap();
+      if (window.ThemeManager) {
+        window.ThemeManager.showThemeModal();
+      }
+    });
+
     function initLobby() {
       Lobby.init({
         gameTitle: 'Callbreak (कॉल ब्रेक)',
@@ -724,8 +953,8 @@
             </select>
           </div>
           <div class="rule-option-row">
-            <span class="rule-label">Minimum Bid</span>
-            <select class="rule-select" id="cbMinBid">
+            <span class="rule-label">Minimum Call Size</span>
+            <select class="rule-select" id="cbMinCall">
               <option value="1" selected>1 Trick</option>
               <option value="2">2 Tricks</option>
             </select>
@@ -740,7 +969,7 @@
         `,
         getCustomSettings: () => ({
           rounds: parseInt(document.getElementById('cbRounds')?.value || 5),
-          minBid: parseInt(document.getElementById('cbMinBid')?.value || 1),
+          minCall: parseInt(document.getElementById('cbMinCall')?.value || 1),
           trumpRule: document.getElementById('cbTrumpRule')?.value || 'strict'
         }),
         onStart: ({ seats, settings, isHost }) => {
@@ -762,6 +991,7 @@
         name: s.name,
         isHuman: s.type === 'human' || (s.type === 'online' && s.id === myProf.id),
         hand: [],
+        call: 0,
         bid: 0,
         won: 0,
         totalScore: 0
@@ -771,6 +1001,9 @@
       document.getElementById('nameWest').textContent = players[1].name;
       document.getElementById('nameNorth').textContent = players[2].name;
       document.getElementById('nameEast').textContent = players[3].name;
+      const sbW = document.getElementById('sbHeaderWest'); if (sbW) sbW.textContent = players[1].name;
+      const sbN = document.getElementById('sbHeaderNorth'); if (sbN) sbN.textContent = players[2].name;
+      const sbE = document.getElementById('sbHeaderEast'); if (sbE) sbE.textContent = players[3].name;
 
       startRound();
     }

@@ -49,25 +49,63 @@ const Lobby = (() => {
       }
     }
 
-    // Initialize seats
+    // Initialize seats from active Party session or default
     seats = [];
-    // Seat 0 is always human host
-    seats.push({
-      type: 'human',
-      id: p.id,
-      name: p.name,
-      avatar: p.avatar,
-      isHost: true
-    });
+    let partySession = null;
+    try {
+      const stored = localStorage.getItem('arcade_party_session');
+      if (stored) partySession = JSON.parse(stored);
+    } catch(e) {}
 
-    // Populate remaining default seats with bots or open slots
-    for (let i = 1; i < gameConfig.defaultPlayers; i++) {
-      seats.push({
-        type: 'bot',
-        name: DEFAULT_BOT_NAMES[(i - 1) % DEFAULT_BOT_NAMES.length],
-        avatar: BOT_AVATARS[(i - 1) % BOT_AVATARS.length],
-        difficulty: 'medium'
+    if (partySession && partySession.members && partySession.members.length > 0) {
+      partySession.members.slice(0, gameConfig.maxPlayers).forEach((m, idx) => {
+        if (idx === 0) {
+          seats.push({
+            type: 'human',
+            id: p.id,
+            name: m.name || p.name,
+            avatar: m.avatar || p.avatar,
+            isHost: true
+          });
+        } else {
+          seats.push({
+            type: m.isBot ? 'bot' : 'online',
+            id: m.id,
+            name: m.name,
+            avatar: m.avatar,
+            difficulty: 'medium'
+          });
+        }
       });
+      // Pad with bots if below defaultPlayers
+      while (seats.length < gameConfig.defaultPlayers) {
+        const i = seats.length;
+        seats.push({
+          type: 'bot',
+          name: DEFAULT_BOT_NAMES[(i - 1) % DEFAULT_BOT_NAMES.length],
+          avatar: BOT_AVATARS[(i - 1) % BOT_AVATARS.length],
+          difficulty: 'medium'
+        });
+      }
+    } else {
+      // Seat 0 is human host
+      seats.push({
+        type: 'human',
+        id: p.id,
+        name: p.name,
+        avatar: p.avatar,
+        isHost: true
+      });
+
+      // Populate remaining default seats with bots or open slots
+      for (let i = 1; i < gameConfig.defaultPlayers; i++) {
+        seats.push({
+          type: 'bot',
+          name: DEFAULT_BOT_NAMES[(i - 1) % DEFAULT_BOT_NAMES.length],
+          avatar: BOT_AVATARS[(i - 1) % BOT_AVATARS.length],
+          difficulty: 'medium'
+        });
+      }
     }
 
     renderLobbyModal(roomCode, true);

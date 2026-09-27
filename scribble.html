@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Scribble Party — GameHub Arcade</title>
+  <link rel="stylesheet" href="shared/hub.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    .scribble-arena {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 12px;
+      position: relative;
+    }
+
+    /* Game Header Banner */
+    .scribble-header-bar {
+      width: 100%;
+      background: rgba(14, 20, 36, 0.9);
+      border: 3px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .word-hint-box {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: var(--yellow-pop);
+      background: rgba(0,0,0,0.4);
+      padding: 4px 18px;
+      border-radius: var(--radius-pill);
+      border: 2px dashed rgba(255,255,255,0.2);
+    }
+
+    .timer-badge {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--pink-pop);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Main Play Area: Canvas + Guess Chat */
+    .scribble-play-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 14px;
+      width: 100%;
+    }
+
+    /* Canvas Box */
+    .canvas-card {
+      background: #fff;
+      border-radius: 16px;
+      border: 4px solid var(--border-card);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #drawingCanvas {
+      width: 100%;
+      height: 400px;
+      background: #ffffff;
+      cursor: crosshair;
+      touch-action: none;
+      display: block;
+    }
+
+    /* Drawing Toolbar */
+    .drawing-toolbar {
+      background: #151a2d;
+      border-top: 3px solid var(--border-card);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .color-swatches-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .color-swatch {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .color-swatch:hover, .color-swatch.active {
+      transform: scale(1.25);
+      box-shadow: 0 0 10px #ffd000;
+    }
+
+    .brush-size-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border-card);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .brush-size-btn.active {
+      background: var(--yellow-pop);
+      color: #000;
+    }
+
+    /* Chat & Guess Stream */
+    .scribble-chat-card {
+      background: rgba(14, 20, 36, 0.9);
+      border: 3px solid var(--border-card);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      height: 480px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.04);
+      border-bottom: 2px solid var(--border-card);
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .chat-messages-box {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .chat-msg {
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 6px 10px;
+      word-break: break-word;
+    }
+    .msg-correct {
+      background: rgba(14, 133, 59, 0.35);
+      border: 1px solid #0e853b;
+      color: #39ff85;
+      font-weight: 800;
+    }
+    .msg-system {
+      color: var(--yellow-pop);
+      font-weight: 800;
+      background: rgba(255, 208, 0, 0.1);
+    }
+
+    .chat-input-bar {
+      padding: 10px;
+      background: rgba(0,0,0,0.3);
+      border-top: 2px solid var(--border-card);
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input {
+      flex: 1;
+      background: #111424;
+      border: 2px solid var(--border-card);
+      border-radius: var(--radius-pill);
+      padding: 8px 14px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .chat-input:focus { border-color: var(--cyan-pop); }
+
+    /* Mobile Responsive Optimizations */
+    @media (max-width: 768px) {
+      .scribble-arena { padding: 4px; }
+      .scribble-play-layout {
+        grid-template-columns: 1fr;
+      }
+      #drawingCanvas {
+        height: 260px;
+      }
+      .scribble-chat-card {
+        height: 260px;
+      }
+      .word-hint-box { font-size: 16px; letter-spacing: 2px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GLOBAL ARCADE NAVBAR -->
+  <header class="arcade-navbar">
+    <a href="index.html" class="nav-brand">
+      <span>🎮</span> GameHub
+      <span class="nav-brand-badge" style="background:#e056fd; color:#fff;">Scribble</span>
+    </a>
+
+    <ul class="nav-games-list">
+      <li><a href="uno.html" class="nav-game-link">🎴 Uno</a></li>
+      <li><a href="callbreak.html" class="nav-game-link">♠️ Callbreak</a></li>
+      <li><a href="ludo.html" class="nav-game-link">🎲 Ludo</a></li>
+      <li><a href="scribble.html" class="nav-game-link active">🎨 Scribble</a></li>
+      <li><a href="wordle.html" class="nav-game-link">🔤 Wordle</a></li>
+      <li><a href="poker.html" class="nav-game-link">🃏 Poker</a></li>
+      <li><a href="blackjack.html" class="nav-game-link">🪙 Blackjack</a></li>
+      <li><a href="connect4.html" class="nav-game-link">🔴 Connect 4</a></li>
+    </ul>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="candy-btn btn-ghost" id="openThemesBtn" style="padding: 7px 14px; font-size: 13px;">🎨 Themes</button>
+      <div class="nav-profile-pill" id="navProfileBtn">
+        <div class="nav-avatar-circle profile-avatar-display">🦊</div>
+        <span class="profile-name-display">Player</span>
+        <div class="nav-coins-badge">
+          <span>🪙</span>
+          <span class="profile-coins-display">10,000</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="scribble-arena">
+
+    <!-- Top Status Bar -->
+    <div class="scribble-header-bar">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="timer-badge">⏳ <span id="roundTimer">60</span>s</span>
+        <span id="drawerIndicator" style="font-weight: 800; font-size: 14px;">🎨 You are Drawing!</span>
+      </div>
+
+      <!-- Secret Word or Hints -->
+      <div class="word-hint-box" id="wordHintBox">_ _ _ _ _</div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="candy-btn btn-ghost" id="openScribbleLobbyBtn" style="padding: 6px 14px; font-size: 12px;">⚙️ Room Setup & Bots</button>
+      </div>
+    </div>
+
+    <!-- Main Layout: Canvas + Chat -->
+    <div class="scribble-play-layout">
+
+      <!-- Drawing Canvas Card -->
+      <div class="canvas-card">
+        <canvas id="drawingCanvas" width="600" height="400"></canvas>
+
+        <!-- Tool Controls -->
+        <div class="drawing-toolbar" id="drawingToolbar">
+          <div class="color-swatches-row">
+            <div class="color-swatch active" style="background:#111111;" data-color="#111111"></div>
+            <div class="color-swatch" style="background:#c41230;" data-color="#c41230"></div>
+            <div class="color-swatch" style="background:#0e5ec7;" data-color="#0e5ec7"></div>
+            <div class="color-swatch" style="background:#0e853b;" data-color="#0e853b"></div>
+            <div class="color-swatch" style="background:#d98200;" data-color="#d98200"></div>
+            <div class="color-swatch" style="background:#e056fd;" data-color="#e056fd"></div>
+            <div class="color-swatch" style="background:#ffffff; border-color:#999;" data-color="#ffffff" title="Eraser"></div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button class="brush-size-btn" data-size="3">S</button>
+            <button class="brush-size-btn active" data-size="8">M</button>
+            <button class="brush-size-btn" data-size="16">L</button>
+            <button class="candy-btn btn-pink" id="clearCanvasBtn" style="padding: 6px 12px; font-size: 12px;">🗑️ Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Guess & Chat Stream -->
+      <div class="scribble-chat-card">
+        <div class="chat-header">
+          <span>💬 Live Guess Chat</span>
+          <span id="scoreTracker" style="color:var(--yellow-pop);">Your Score: 0</span>
+        </div>
+
+        <div class="chat-messages-box" id="chatMessages">
+          <div class="chat-msg msg-system">🎮 Welcome to Scribble Party! Guess the word as it is drawn!</div>
+        </div>
+
+        <form class="chat-input-bar" id="chatForm">
+          <input type="text" class="chat-input" id="chatInput" placeholder="Type your guess here..." maxlength="30" autocomplete="off" />
+          <button type="submit" class="candy-btn btn-cyan" style="padding: 6px 16px; font-size: 13px;">Send</button>
+        </form>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="shared/sfx.js"></script>
+  <script src="shared/profile.js"></script>
+  <script src="shared/themes.js"></script>
+  <script src="shared/party.js"></script>
+  <script src="shared/network.js"></script>
+  <script src="shared/lobby.js"></script>
+  <script>
+    /* ===========================================================
+       SCRIBBLE DRAW & GUESS GAME ENGINE WITH BOT DRAWING AI
+       =========================================================== */
+    const WORD_LIST = [
+      { word: 'HOUSE', hint: '🏠 Building with a roof and door' },
+      { word: 'TREE', hint: '🌳 Nature plant with green leaves' },
+      { word: 'SUN', hint: '☀️ Bright star in the daytime sky' },
+      { word: 'CAR', hint: '🚗 Vehicle with four wheels' },
+      { word: 'CAT', hint: '🐱 Feline pet with whiskers' },
+      { word: 'FISH', hint: '🐟 Swims underwater with fins' },
+      { word: 'PIZZA', hint: '🍕 Cheesy Italian food slice' },
+      { word: 'BOAT', hint: '⛵ Floats on water with sails' },
+      { word: 'CLOCK', hint: '⏰ Tells the hours and minutes' },
+      { word: 'SMILE', hint: '😊 Happy expression on a face' }
+    ];
+
+    let currentWordObj = WORD_LIST[0];
+    let isDrawing = false;
+    let isHumanDrawer = true;
+    let drawerIndex = 0;
+    let roundTimer = 60;
+    let timerInterval = null;
+    let userScore = 0;
+    let players = [];
+    let hasGuessedThisRound = false;
+
+    // Canvas State
+    const canvas = document.getElementById('drawingCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentColor = '#111111';
+    let currentBrushSize = 8;
+    let isMouseDown = false;
+    let lastX = 0, lastY = 0;
+
+    function initScribble() {
+      setupCanvasScaling();
+      setupDrawingEvents();
+      startRound();
+    }
+
+    function setupCanvasScaling() {
+      // Fix high DPI canvas blur
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width || 600;
+      canvas.height = rect.height || 400;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      clearCanvas();
+    }
+
+    function clearCanvas() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function setupDrawingEvents() {
+      // Mouse Events
+      canvas.addEventListener('mousedown', (e) => {
+        if (!isHumanDrawer) return;
+        isMouseDown = true;
+        const rect = canvas.getBoundingClientRect();
+        lastX = e.clientX - rect.left;
+        lastY = e.clientY - rect.top;
+        drawDot(lastX, lastY);
+      });
+
+      canvas.addEventListener('mousemove', (e) => {
+        if (!isMouseDown || !isHumanDrawer) return;
+        const rect = canvas.getBoundingClientRect();
+        const curX = e.clientX - rect.left;
+        const curY = e.clientY - rect.top;
+        drawLine(lastX, lastY, curX, curY);
+        lastX = curX;
+        lastY = curY;
+      });
+
+      window.addEventListener('mouseup', () => { isMouseDown = false; });
+
+      // Mobile Touch Events
+      canvas.addEventListener('touchstart', (e) => {
+        if (!isHumanDrawer) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        lastX = touch.clientX - rect.left;
+        lastY = touch.clientY - rect.top;
+        drawDot(lastX, lastY);
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', (e) => {
+        if (!isHumanDrawer) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const curX = touch.clientX - rect.left;
+        const curY = touch.clientY - rect.top;
+        drawLine(lastX, lastY, curX, curY);
+        lastX = curX;
+        lastY = curY;
+      }, { passive: false });
+
+      // Color swatches
+      document.querySelectorAll('.color-swatch').forEach(sw => {
+        sw.onclick = () => {
+          document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+          sw.classList.add('active');
+          currentColor = sw.dataset.color;
+        };
+      });
+
+      // Brush sizes
+      document.querySelectorAll('.brush-size-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.brush-size-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentBrushSize = parseInt(btn.dataset.size);
+        };
+      });
+
+      document.getElementById('clearCanvasBtn').onclick = () => {
+        if (!isHumanDrawer) return;
+        clearCanvas();
+        SFX.tap();
+      };
+    }
+
+    function drawDot(x, y) {
+      ctx.fillStyle = currentColor;
+      ctx.beginPath();
+      ctx.arc(x, y, currentBrushSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawLine(x1, y1, x2, y2) {
+      ctx.strokeStyle = currentColor;
+      ctx.lineWidth = currentBrushSize;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function startRound() {
+      clearCanvas();
+      hasGuessedThisRound = false;
+      currentWordObj = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+      isHumanDrawer = (drawerIndex === 0);
+
+      const hintBox = document.getElementById('wordHintBox');
+      const drawerInd = document.getElementById('drawerIndicator');
+      const toolbar = document.getElementById('drawingToolbar');
+
+      if (isHumanDrawer) {
+        drawerInd.innerHTML = `🎨 <b>Your turn to draw!</b> Draw: <span style="color:var(--yellow-pop);">${currentWordObj.word}</span>`;
+        hintBox.textContent = currentWordObj.word;
+        toolbar.style.opacity = '1';
+        toolbar.style.pointerEvents = 'auto';
+        addChatMessage(`🎨 You are drawing "${currentWordObj.word}". Other players will guess!`, 'msg-system');
+      } else {
+        const curDrawer = players[drawerIndex] || { name: 'RoboAce', avatar: '🤖' };
+        drawerInd.innerHTML = `🎨 <b>${curDrawer.name}</b> is drawing!`;
+        hintBox.textContent = currentWordObj.word.split('').map(() => '_').join(' ');
+        toolbar.style.opacity = '0.5';
+        toolbar.style.pointerEvents = 'none';
+        addChatMessage(`🎨 ${curDrawer.name} is now drawing! Guess the word!`, 'msg-system');
+
+        // Start Bot Drawing AI
+        simulateBotDrawing(currentWordObj.word);
+      }
+
+      startTimer();
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      roundTimer = 60;
+      document.getElementById('roundTimer').textContent = roundTimer;
+
+      timerInterval = setInterval(() => {
+        roundTimer--;
+        document.getElementById('roundTimer').textContent = roundTimer;
+
+        // Bot periodic guessing simulation when human draws
+        if (isHumanDrawer && roundTimer % 12 === 0 && roundTimer > 15) {
+          simulateBotGuess();
+        }
+
+        if (roundTimer <= 0) {
+          endRound();
+        }
+      }, 1000);
+    }
+
+    function endRound() {
+      clearInterval(timerInterval);
+      addChatMessage(`⏰ Time's up! The word was "${currentWordObj.word}".`, 'msg-system');
+
+      setTimeout(() => {
+        drawerIndex = (drawerIndex + 1) % (players.length || 4);
+        startRound();
+      }, 3500);
+    }
+
+    // Bot Drawing Simulation Paths
+    function simulateBotDrawing(word) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 6;
+
+      let step = 0;
+      const drawInterval = setInterval(() => {
+        if (step > 8 || isHumanDrawer) {
+          clearInterval(drawInterval);
+          return;
+        }
+
+        // Generic fun sketch animation
+        ctx.beginPath();
+        if (word === 'HOUSE') {
+          if (step === 0) { ctx.strokeRect(w * 0.3, h * 0.45, w * 0.4, h * 0.45); } // Main box
+          else if (step === 1) { // Roof triangle
+            ctx.moveTo(w * 0.25, h * 0.45); ctx.lineTo(w * 0.5, h * 0.2); ctx.lineTo(w * 0.75, h * 0.45); ctx.stroke();
+          } else if (step === 2) { ctx.strokeRect(w * 0.45, h * 0.65, w * 0.1, h * 0.25); } // Door
+        } else if (word === 'SUN') {
+          if (step === 0) { ctx.arc(w * 0.5, h * 0.5, 50, 0, Math.PI * 2); ctx.stroke(); }
+          else {
+            const angle = (step * Math.PI) / 4;
+            ctx.moveTo(w * 0.5 + Math.cos(angle) * 55, h * 0.5 + Math.sin(angle) * 55);
+            ctx.lineTo(w * 0.5 + Math.cos(angle) * 85, h * 0.5 + Math.sin(angle) * 85);
+            ctx.stroke();
+          }
+        } else {
+          // General friendly sketch
+          ctx.arc(w * 0.4 + step * 25, h * 0.4 + (step % 2) * 30, 25, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        step++;
+      }, 1500);
+    }
+
+    function simulateBotGuess() {
+      const bots = players.filter((_, idx) => idx !== 0 && idx !== drawerIndex);
+      if (bots.length === 0) return;
+      const randomBot = bots[Math.floor(Math.random() * bots.length)];
+
+      if (Math.random() > 0.4) {
+        addChatMessage(`🎉 ${randomBot.name} guessed the word! (+100 pts)`, 'msg-correct');
+        SFX.pop();
+      } else {
+        const dummyGuesses = ['cat', 'car', 'tree', 'house', 'plane', 'dog', 'star'];
+        const guess = dummyGuesses[Math.floor(Math.random() * dummyGuesses.length)];
+        addChatMessage(`<b>${randomBot.name}:</b> ${guess}`, 'chat-msg');
+      }
+    }
+
+    // Chat Form & Guess Handler
+    document.getElementById('chatForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const text = (input.value || '').trim();
+      if (!text) return;
+      input.value = '';
+
+      if (isHumanDrawer) {
+        addChatMessage(`<b>You (Drawing):</b> ${text}`, 'chat-msg');
+        return;
+      }
+
+      if (text.toUpperCase() === currentWordObj.word) {
+        if (!hasGuessedThisRound) {
+          hasGuessedThisRound = true;
+          userScore += 150;
+          document.getElementById('scoreTracker').textContent = `Your Score: ${userScore}`;
+          addChatMessage(`🎉 YOU GUESSED THE WORD! (+150 pts)`, 'msg-correct');
+          SFX.win();
+          confetti({ particleCount: 100, spread: 70 });
+        } else {
+          Toast.show('You already guessed the word this round!', 'inf');
+        }
+      } else {
+        addChatMessage(`<b>You:</b> ${text}`, 'chat-msg');
+        SFX.tap();
+      }
+    });
+
+    function addChatMessage(html, className = 'chat-msg') {
+      const box = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = className;
+      div.innerHTML = html;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function initScribbleLobby() {
+      Lobby.init({
+        gameTitle: 'Scribble Party',
+        gamePrefix: 'SCRIB',
+        minPlayers: 2,
+        maxPlayers: 6,
+        defaultPlayers: 4,
+        onStart: ({ seats }) => {
+          players = seats;
+          initScribble();
+        }
+      });
+    }
+
+    document.getElementById('openScribbleLobbyBtn').addEventListener('click', () => {
+      SFX.tap();
+      initScribbleLobby();
+    });
+
+    document.getElementById('openThemesBtn')?.addEventListener('click', () => {
+      SFX.tap();
+      if (window.ThemeManager) {
+        window.ThemeManager.showThemeModal();
+      }
+    });
+
+    window.addEventListener('load', initScribbleLobby);
+  </script>
+</body>
+</html>

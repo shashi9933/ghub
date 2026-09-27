@@ -20,17 +20,26 @@
     <ul class="nav-games-list">
       <li><a href="uno.html" class="nav-game-link">🎴 Uno</a></li>
       <li><a href="callbreak.html" class="nav-game-link">♠️ Callbreak</a></li>
+      <li><a href="ludo.html" class="nav-game-link">🎲 Ludo</a></li>
+      <li><a href="scribble.html" class="nav-game-link">🎨 Scribble</a></li>
+      <li><a href="wordle.html" class="nav-game-link">🔤 Wordle</a></li>
       <li><a href="poker.html" class="nav-game-link">🃏 Poker</a></li>
       <li><a href="blackjack.html" class="nav-game-link">🪙 Blackjack</a></li>
       <li><a href="connect4.html" class="nav-game-link">🔴 Connect 4</a></li>
     </ul>
 
-    <div class="nav-profile-pill" id="navProfileBtn">
-      <div class="nav-avatar-circle profile-avatar-display">🦊</div>
-      <span class="profile-name-display" style="font-weight:700; font-size:14px;">Player</span>
-      <div class="nav-coins-badge">
-        <span>🪙</span>
-        <span class="profile-coins-display">10,000</span>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="open-theme-btn" id="openThemesBtn" style="background:rgba(255,255,255,0.08); border:2px solid var(--border-card); border-radius:var(--radius-pill); color:#fff; padding:6px 12px; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px;">
+        <span id="activeThemeBadge">🎨 Themes</span>
+      </button>
+
+      <div class="nav-profile-pill" id="navProfileBtn">
+        <div class="nav-avatar-circle profile-avatar-display">🦊</div>
+        <span class="profile-name-display" style="font-weight:700; font-size:14px;">Player</span>
+        <div class="nav-coins-badge">
+          <span>🪙</span>
+          <span class="profile-coins-display">10,000</span>
+        </div>
       </div>
     </div>
   </header>
@@ -40,17 +49,47 @@
     <section class="hub-hero">
       <div class="hub-hero-badge">✨ Party Arcade Games</div>
       <h1>Play Party Games With <span class="text-gradient">Friends & Bots!</span></h1>
-      <p>Jump directly into real-time card games and board classics. Share a room code with friends across any phone, tablet, or PC, or practice against smart AI bots!</p>
+      <p>Jump directly into real-time card games, board classics, drawing battles, and word challenges. Share your party code with friends across any phone, tablet, or PC, or play against smart AI bots!</p>
 
       <!-- Quick Room Code Joiner -->
       <div class="quick-join-bar">
         <span style="font-size:20px;">🔑</span>
-        <input type="text" id="quickRoomInput" class="quick-join-input" placeholder="Enter Room Code (e.g. UNO-9281, CB-4820)..." maxlength="15" />
+        <input type="text" id="quickRoomInput" class="quick-join-input" placeholder="Enter Room or Party Code (e.g. PARTY-8291, LUDO-4820)..." maxlength="15" />
         <button class="candy-btn btn-pink" id="quickJoinBtn" style="padding: 10px 22px; font-size: 14px;">Join Game</button>
       </div>
     </section>
 
-    <!-- GAMES SELECTION GRID -->
+    <!-- MULTIPLAYER PARTY LOUNGE -->
+    <section class="party-lounge-container" style="max-width: 1240px; margin: 0 auto 30px; padding: 0 20px;">
+      <div style="background: rgba(17, 24, 48, 0.9); border: 3px solid var(--border-card); border-radius: var(--radius-lg); padding: 22px 26px; box-shadow: var(--shadow-bouncy); backdrop-filter: blur(10px);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 26px;">🎉</span>
+              <h2 style="font-family: 'Fredoka', cursive; font-size: 24px; margin: 0;">Multiplayer Party Lounge</h2>
+              <span class="game-tag" style="background: var(--pink-pop); color: #fff; font-size: 13px;" id="partyCodeBadge">PARTY-1234</span>
+            </div>
+            <p style="color: var(--text-sub); font-size: 14px; margin-top: 4px;">
+              Assemble your party with friends or bots. Launching any game below automatically takes all party members along!
+            </p>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <button class="candy-btn btn-cyan" id="addBotBtn" style="padding: 9px 18px; font-size: 13px;">➕ Add Bot</button>
+            <button class="candy-btn btn-pink" id="copyPartyLinkBtn" style="padding: 9px 18px; font-size: 13px;">🔗 Invite Friends</button>
+          </div>
+        </div>
+
+        <!-- Party Members Grid -->
+        <div id="partyMembersList" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
+          <!-- Injected dynamically -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- GAMES SELECTION GRID (8 Games) -->
     <section class="games-grid">
 
       <!-- 1. UNO PARTY -->
@@ -62,16 +101,15 @@
             <span class="game-player-badge">2–4 Players</span>
           </div>
           <h2 class="game-title" style="color: #ff5c77;">Uno Party</h2>
-          <p class="game-desc">The high-energy card matching classic! Play numbers & colors, unleash +2, +4, Skip, and Reverse, and remember to shout <b>UNO!</b></p>
+          <p class="game-desc">The high-energy card matching classic! Play numbers & deep contrast colors, unleash +2, +4, Skip, and Reverse, and remember to shout <b>UNO!</b></p>
           <div class="game-tags">
             <span class="game-tag">Action Cards</span>
             <span class="game-tag">Wild +4</span>
-            <span class="game-tag">Online & Bots</span>
+            <span class="game-tag">Dark Contrast</span>
           </div>
         </div>
         <div class="game-actions">
-          <a href="uno.html?mode=bot" class="candy-btn btn-yellow" style="font-size: 14px; padding: 10px;">🤖 Play Solo</a>
-          <a href="uno.html" class="candy-btn btn-pink" style="font-size: 14px; padding: 10px;">👥 Multiplayer</a>
+          <button class="candy-btn btn-yellow party-launch-btn" data-game="uno.html" style="grid-column: span 2; font-size: 14px; padding: 10px;">🚀 Play with Party</button>
         </div>
       </div>
 
@@ -84,20 +122,82 @@
             <span class="game-player-badge">4 Players</span>
           </div>
           <h2 class="game-title" style="color: var(--cyan-pop);">Callbreak (कॉल ब्रेक)</h2>
-          <p class="game-desc">Authentic South Asian trick-taking card game. Spades are permanent trumps. Place your bids (1–13) and win the exact tricks across 5 rounds!</p>
+          <p class="game-desc">Authentic South Asian trick-taking card game. Spades are permanent trumps. Place your calls (1–8) with custom call size editing across 5 rounds!</p>
           <div class="game-tags">
             <span class="game-tag">Spade Trumps</span>
-            <span class="game-tag">5 Rounds</span>
-            <span class="game-tag">Scoreboard</span>
+            <span class="game-tag">Call Size Editor</span>
+            <span class="game-tag">13-Card Fan</span>
           </div>
         </div>
         <div class="game-actions">
-          <a href="callbreak.html?mode=bot" class="candy-btn btn-cyan" style="font-size: 14px; padding: 10px;">🤖 Play Solo</a>
-          <a href="callbreak.html" class="candy-btn btn-purple" style="font-size: 14px; padding: 10px;">👥 Multiplayer</a>
+          <button class="candy-btn btn-cyan party-launch-btn" data-game="callbreak.html" style="grid-column: span 2; font-size: 14px; padding: 10px;">🚀 Play with Party</button>
         </div>
       </div>
 
-      <!-- 3. TEXAS HOLD'EM POKER -->
+      <!-- 3. LUDO CLASSIC -->
+      <div class="game-card card-ludo" style="border-top: 5px solid #e67e22;">
+        <div class="game-card-bg-glow" style="background: #e67e22;"></div>
+        <div>
+          <div class="card-top">
+            <div class="game-icon-box">🎲</div>
+            <span class="game-player-badge">2–4 Players</span>
+          </div>
+          <h2 class="game-title" style="color: #f39c12;">Ludo Classic</h2>
+          <p class="game-desc">The beloved 4-color board game! Roll animated 3D dice, exit your base on 6, knockout opponent tokens, and race safely to the home center crown!</p>
+          <div class="game-tags">
+            <span class="game-tag">3D Dice Roll</span>
+            <span class="game-tag">Safe Stars</span>
+            <span class="game-tag">Knockout Bonus</span>
+          </div>
+        </div>
+        <div class="game-actions">
+          <button class="candy-btn btn-yellow party-launch-btn" data-game="ludo.html" style="grid-column: span 2; font-size: 14px; padding: 10px;">🚀 Play with Party</button>
+        </div>
+      </div>
+
+      <!-- 4. SCRIBBLE PARTY -->
+      <div class="game-card card-scribble" style="border-top: 5px solid #e056fd;">
+        <div class="game-card-bg-glow" style="background: #e056fd;"></div>
+        <div>
+          <div class="card-top">
+            <div class="game-icon-box">🎨</div>
+            <span class="game-player-badge">2–6 Players</span>
+          </div>
+          <h2 class="game-title" style="color: #e056fd;">Scribble Party</h2>
+          <p class="game-desc">Hilarious multiplayer draw and guess game! Draw with vibrant colors and brush sizes, or guess the secret drawings in real-time live chat with bot AI sketchers!</p>
+          <div class="game-tags">
+            <span class="game-tag">Live Drawing</span>
+            <span class="game-tag">Guess Chat</span>
+            <span class="game-tag">Bot Sketcher AI</span>
+          </div>
+        </div>
+        <div class="game-actions">
+          <button class="candy-btn btn-pink party-launch-btn" data-game="scribble.html" style="grid-column: span 2; font-size: 14px; padding: 10px;">🚀 Play with Party</button>
+        </div>
+      </div>
+
+      <!-- 5. WORDLE PARTY -->
+      <div class="game-card card-wordle" style="border-top: 5px solid #0e853b;">
+        <div class="game-card-bg-glow" style="background: #0e853b;"></div>
+        <div>
+          <div class="card-top">
+            <div class="game-icon-box">🔤</div>
+            <span class="game-player-badge">1–6 Players</span>
+          </div>
+          <h2 class="game-title" style="color: #2ecc71;">Wordle Party</h2>
+          <p class="game-desc">The viral 5-letter word deduction game! Guess the hidden word in 6 attempts with color feedback, flip tile animations, and real-time multiplayer party race!</p>
+          <div class="game-tags">
+            <span class="game-tag">Flip Tiles</span>
+            <span class="game-tag">Tactile Keyboard</span>
+            <span class="game-tag">Party Race</span>
+          </div>
+        </div>
+        <div class="game-actions">
+          <button class="candy-btn btn-lime party-launch-btn" data-game="wordle.html" style="grid-column: span 2; font-size: 14px; padding: 10px;">🚀 Play with Party</button>
+        </div>
+      </div>
+
+      <!-- 6. TEXAS HOLD'EM POKER -->
       <div class="game-card card-poker">
         <div class="game-card-bg-glow" style="background: var(--yellow-pop);"></div>
         <div>
@@ -114,12 +214,11 @@
           </div>
         </div>
         <div class="game-actions">
-          <a href="poker.html?mode=bot" class="candy-btn btn-lime" style="font-size: 14px; padding: 10px;">🤖 Play Solo</a>
-          <a href="poker.html" class="candy-btn btn-yellow" style="font-size: 14px; padding: 10px;">👥 Multiplayer</a>
+          <button class="candy-btn btn-yellow party-launch-btn" data-game="poker.html" style="grid-column: span 2; font-size: 14px; padding: 10px;">🚀 Play with Party</button>
         </div>
       </div>
 
-      <!-- 4. BLACKJACK 21 -->
+      <!-- 7. BLACKJACK 21 -->
       <div class="game-card card-blackjack">
         <div class="game-card-bg-glow" style="background: var(--purple-pop);"></div>
         <div>
@@ -136,11 +235,11 @@
           </div>
         </div>
         <div class="game-actions">
-          <a href="blackjack.html" class="candy-btn btn-purple" style="grid-column: span 2; font-size: 15px; padding: 12px;">🪙 Play Blackjack 21</a>
+          <button class="candy-btn btn-purple party-launch-btn" data-game="blackjack.html" style="grid-column: span 2; font-size: 14px; padding: 10px;">🚀 Play with Party</button>
         </div>
       </div>
 
-      <!-- 5. CONNECT 4 -->
+      <!-- 8. CONNECT 4 -->
       <div class="game-card card-connect4">
         <div class="game-card-bg-glow" style="background: var(--lime-pop);"></div>
         <div>
@@ -157,8 +256,7 @@
           </div>
         </div>
         <div class="game-actions">
-          <a href="connect4.html?mode=bot" class="candy-btn btn-lime" style="font-size: 14px; padding: 10px;">🤖 Play AI</a>
-          <a href="connect4.html" class="candy-btn btn-cyan" style="font-size: 14px; padding: 10px;">👥 2 Players</a>
+          <button class="candy-btn btn-cyan party-launch-btn" data-game="connect4.html" style="grid-column: span 2; font-size: 14px; padding: 10px;">🚀 Play with Party</button>
         </div>
       </div>
 
@@ -169,7 +267,7 @@
       <div style="background: var(--bg-card); border: 3px solid var(--border-card); border-radius: var(--radius-lg); padding: 30px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; box-shadow: var(--shadow-bouncy);">
         <div>
           <h3 style="font-family: 'Fredoka', cursive; font-size: 24px; margin-bottom: 6px;">🏆 Win Matches, Earn Trophies & Coins</h3>
-          <p style="color: var(--text-sub); font-size: 15px;">Every victory across Uno, Callbreak, Poker, Blackjack, and Connect 4 grants you 500 bonus arcade coins!</p>
+          <p style="color: var(--text-sub); font-size: 15px;">Every victory across all 8 arcade games grants you 500 bonus coins!</p>
         </div>
         <button class="candy-btn btn-yellow" id="hubCustomizeBtn" style="padding: 12px 24px;">👤 Edit Profile</button>
       </div>
@@ -182,7 +280,73 @@
 
   <script src="shared/sfx.js"></script>
   <script src="shared/profile.js"></script>
+  <script src="shared/themes.js"></script>
+  <script src="shared/party.js"></script>
   <script>
+    // Party Lounge UI Renderer
+    function renderPartyLounge() {
+      const party = PartyManager.getParty();
+      const codeBadge = document.getElementById('partyCodeBadge');
+      if (codeBadge) codeBadge.textContent = party.code;
+
+      const list = document.getElementById('partyMembersList');
+      if (!list) return;
+      list.innerHTML = '';
+
+      party.members.forEach((m) => {
+        const pill = document.createElement('div');
+        pill.style.cssText = `
+          background: rgba(255,255,255,0.06);
+          border: 2px solid var(--border-card);
+          border-radius: var(--radius-pill);
+          padding: 6px 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 700;
+        `;
+        pill.innerHTML = `
+          <span style="font-size: 18px;">${m.avatar}</span>
+          <span>${m.name}</span>
+          <span style="font-size: 11px; color: ${m.isHost ? 'var(--yellow-pop)' : (m.isBot ? 'var(--cyan-pop)' : '#fff')};">
+            (${m.isHost ? 'Host' : (m.isBot ? 'Bot' : 'Player')})
+          </span>
+          ${!m.isHost ? `<button class="remove-member-btn" data-id="${m.id}" style="background:none; border:none; color:var(--pink-pop); font-size:16px; cursor:pointer; padding:0 2px;">&times;</button>` : ''}
+        `;
+        list.appendChild(pill);
+      });
+
+      // Wire remove buttons
+      list.querySelectorAll('.remove-member-btn').forEach(btn => {
+        btn.onclick = () => {
+          SFX.tap();
+          PartyManager.removeMember(btn.dataset.id);
+          renderPartyLounge();
+        };
+      });
+    }
+
+    // Party Controls
+    document.getElementById('addBotBtn')?.addEventListener('click', () => {
+      SFX.tap();
+      PartyManager.addBot();
+      renderPartyLounge();
+    });
+
+    document.getElementById('copyPartyLinkBtn')?.addEventListener('click', () => {
+      SFX.tap();
+      PartyManager.copyInviteLink();
+    });
+
+    // Launch with party buttons
+    document.querySelectorAll('.party-launch-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const game = btn.dataset.game;
+        PartyManager.launchGame(game);
+      });
+    });
+
     // Quick Room Router
     const quickInput = document.getElementById('quickRoomInput');
     const quickBtn = document.getElementById('quickJoinBtn');
@@ -196,11 +360,18 @@
       }
       SFX.tap();
 
-      // Route by code prefix or query
-      if (code.startsWith('UNO-')) {
+      if (code.startsWith('PARTY-')) {
+        PartyManager.joinParty(code);
+        renderPartyLounge();
+        return;
+      } else if (code.startsWith('UNO-')) {
         location.href = `uno.html?room=${code}`;
       } else if (code.startsWith('CB-') || code.startsWith('CALL-')) {
         location.href = `callbreak.html?room=${code}`;
+      } else if (code.startsWith('LUDO-')) {
+        location.href = `ludo.html?room=${code}`;
+      } else if (code.startsWith('SCRIB-')) {
+        location.href = `scribble.html?room=${code}`;
       } else if (code.startsWith('PK-') || code.startsWith('POK-')) {
         location.href = `poker.html?room=${code}`;
       } else if (code.startsWith('BJ-')) {
@@ -208,7 +379,6 @@
       } else if (code.startsWith('C4-')) {
         location.href = `connect4.html?room=${code}`;
       } else {
-        // Prompt user which game they are joining if prefix is missing
         location.href = `uno.html?room=${code}`;
       }
     }
@@ -221,6 +391,17 @@
     document.getElementById('hubCustomizeBtn').addEventListener('click', () => {
       SFX.tap();
       Profile.showProfileModal();
+    });
+
+    document.getElementById('openThemesBtn')?.addEventListener('click', () => {
+      SFX.tap();
+      if (window.ThemeManager) {
+        window.ThemeManager.showThemeModal();
+      }
+    });
+
+    window.addEventListener('load', () => {
+      renderPartyLounge();
     });
   </script>
 </body>

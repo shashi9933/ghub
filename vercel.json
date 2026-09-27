@@ -3,6 +3,9 @@
   "rewrites": [
     { "source": "/uno", "destination": "/uno.html" },
     { "source": "/callbreak", "destination": "/callbreak.html" },
+    { "source": "/ludo", "destination": "/ludo.html" },
+    { "source": "/scribble", "destination": "/scribble.html" },
+    { "source": "/wordle", "destination": "/wordle.html" },
     { "source": "/poker", "destination": "/poker.html" },
     { "source": "/blackjack", "destination": "/blackjack.html" },
     { "source": "/connect4", "destination": "/connect4.html" },
