@@ -892,6 +892,16 @@ try {
     if (saved) Object.assign(S.hindiCache, JSON.parse(saved));
 } catch(e) {}
 
+try {
+    const savedName = localStorage.getItem('wordgrid_player_name');
+    if (savedName) {
+        window.addEventListener('DOMContentLoaded', () => {
+            if ($('hostName')) $('hostName').value = savedName;
+            if ($('joinName')) $('joinName').value = savedName;
+        });
+    }
+} catch(e) {}
+
 const $ = id => document.getElementById(id);
 const $$ = s => document.querySelectorAll(s);
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -1392,10 +1402,15 @@ function placeLetter(row, col, letter){
     if (!isMyTurn() || S.board[row][col]) return;
 
     if (S.mode === 'online' && !S.isHost) {
-        sendHost({type: 'place', row, col, letter});
+        // Immediate optimistic placement for instant snappy feel
+        S.board[row][col] = letter;
+        S.justCells = new Set([`${row}-${col}`]);
         S.pickedLetter = null;
         S.selectedCell = null;
+        SFX.tap();
         renderAll();
+
+        sendHost({type: 'place', row, col, letter});
         return;
     }
 
@@ -1526,8 +1541,10 @@ function curP(){ return S.players[S.curPI]; }
 function isMyTurn(){
     if (!S.started || S.over) return false;
     if (S.mode === 'local') return true;
+    const cp = S.players[S.curPI];
+    if (!cp) return false;
     if (S.isHost) return S.curPI === 0;
-    return S.players[S.curPI]?.id === S.myId;
+    return cp.id === S.myId || (S.myName && cp.name === S.myName);
 }
 
 function advanceTurn(){
@@ -1811,12 +1828,33 @@ function genCode(){
 
 const ICE_CFG = {
     iceServers: [
-        {urls: 'stun:stun.l.google.com:19302'},
-        {urls: 'stun:stun1.l.google.com:19302'},
-        {urls: 'stun:stun2.l.google.com:19302'},
-        {urls: 'stun:stun3.l.google.com:19302'},
-        {urls: 'stun:stun4.l.google.com:19302'},
-    ]
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun.relay.metered.ca:80' },
+        {
+            urls: 'turn:openrelay.metered.ca:80',
+            username: 'openrelay',
+            credential: 'openrelay'
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:443',
+            username: 'openrelay',
+            credential: 'openrelay'
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+            username: 'openrelay',
+            credential: 'openrelay'
+        }
+    ],
+    iceCandidatePoolSize: 10
+};
+
+const PEER_OPTS = {
+    debug: 0,
+    config: ICE_CFG,
+    pingInterval: 5000
 };
 
 function serializeP(){
@@ -1844,6 +1882,8 @@ function broadcastGS(){
         over: S.over,
         powerActive: S.powerActive,
         placementsLeft: S.placementsLeft,
+        customTimer: C.TT,
+        maxTurns: S.maxTurns,
         scoredKeys: [...S.scoredKeys],
         usedWords: [...S.usedWords],
         justCells: [...S.justCells],
@@ -1865,7 +1905,9 @@ $('createBtn').addEventListener('click', () => {
     S.customTimer = Number($('onlineTimer').value);
     S.maxTurns = Number($('onlineTurns').value);
     setConn(false, 'Connecting...');
-    S.peer = new Peer(C.PRE + S.roomCode, {debug: 0, config: ICE_CFG});
+    if (S.peer && !S.peer.destroyed) { try { S.peer.destroy(); } catch(e){} }
+    S.peer = new Peer(C.PRE + S.roomCode, PEER_OPTS);
+    try { localStorage.setItem('wordgrid_player_name', name); } catch(e){}
 
     S.peer.on('open', id => {
         S.myId = id; setConn(true, 'Hosting');
@@ -1902,21 +1944,40 @@ $('createBtn').addEventListener('click', () => {
 });
 
 function handlePeerData(conn, data){
+    // Helper to find player index by connection or peer ID
+    function getPI(id) {
+        let idx = S.players.findIndex(p => p.id === id);
+        if (idx === -1) {
+            const entry = S.conns.find(c => c.conn === conn);
+            if (entry) idx = S.players.findIndex(p => p.id === entry.id);
+        }
+        return idx;
+    }
+
     if (data.type === 'join') {
         if (S.players.length >= S.maxPlayers) { conn.send({type: 'error', msg: 'Room is full.'}); return; }
         const pi = S.players.length;
-        const info = {id: conn.peer, name: data.name || 'Player', score: 0, color: C.COLORS[pi] || '#888', powers: 0};
+        const pId = conn.peer;
+        const info = {id: pId, name: data.name || `Player ${pi+1}`, score: 0, color: C.COLORS[pi] || '#888', powers: 0};
         S.players.push(info);
-        S.conns.push({conn, id: conn.peer});
+        S.conns.push({conn, id: pId});
         SFX.join();
         toast(`${info.name} joined!`, 'inf');
-        conn.send({type: 'welcome', playerId: conn.peer, roomCode: S.roomCode, players: serializeP(), maxPlayers: S.maxPlayers});
+        conn.send({
+            type: 'welcome',
+            playerId: pId,
+            roomCode: S.roomCode,
+            players: serializeP(),
+            maxPlayers: S.maxPlayers,
+            customTimer: C.TT,
+            maxTurns: S.maxTurns
+        });
         broadcastAll({type: 'plist', players: serializeP(), maxPlayers: S.maxPlayers});
         renderWaitPlayers();
         updateWaitBtn();
     }
     if (data.type === 'activatePower') {
-        const pi = S.players.findIndex(p => p.id === conn.peer);
+        const pi = getPI(conn.peer);
         if (pi === -1 || pi !== S.curPI) { conn.send({type: 'error', msg: "Not your turn."}); return; }
         const p = S.players[pi];
         if (!p.powers || p.powers <= 0 || S.powerActive) { conn.send({type: 'error', msg: "No power available."}); return; }
@@ -1929,13 +1990,13 @@ function handlePeerData(conn, data){
         renderAll();
     }
     if (data.type === 'place') {
-        const pi = S.players.findIndex(p => p.id === conn.peer);
+        const pi = getPI(conn.peer);
         if (pi === -1 || pi !== S.curPI) { conn.send({type: 'error', msg: "Not your turn."}); return; }
         if (!inB(data.row, data.col) || S.board[data.row][data.col]) { conn.send({type: 'error', msg: "Invalid cell."}); return; }
         placeLetter(data.row, data.col, data.letter);
     }
     if (data.type === 'skip') {
-        const pi = S.players.findIndex(p => p.id === conn.peer);
+        const pi = getPI(conn.peer);
         if (pi === -1 || pi !== S.curPI) return;
         handleSkip(false);
     }
@@ -1981,13 +2042,27 @@ $('wStartBtn').addEventListener('click', () => {
 $('joinBtn').addEventListener('click', () => {
     const name = $('joinName').value.trim();
     if (!name) { toast('Enter your name.', 'er'); $('joinName').focus(); return; }
-    const code = $('joinCode').value.trim().toUpperCase();
-    if (!code) { toast('Enter room code.', 'er'); $('joinCode').focus(); return; }
+    const code = $('joinCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!code || code.length < 4) { toast('Enter a valid room code.', 'er'); $('joinCode').focus(); return; }
+
+    try { localStorage.setItem('wordgrid_player_name', name); } catch(e){}
+
     S.mode = 'online'; S.isHost = false; S.myName = name; S.roomCode = code;
     setConn(false, 'Connecting...');
-    S.peer = new Peer(undefined, {debug: 0, config: ICE_CFG});
 
-    let retries = 0; const maxRetries = 3;
+    const jBtn = $('joinBtn');
+    jBtn.disabled = true;
+    jBtn.textContent = 'Connecting...';
+
+    if (S.peer && !S.peer.destroyed) {
+        try { S.peer.destroy(); } catch(e){}
+    }
+
+    S.peer = new Peer(undefined, PEER_OPTS);
+
+    let retries = 0;
+    const maxRetries = 5;
+    let activeConn = null;
 
     S.peer.on('open', myId => {
         S.myId = myId;
@@ -1995,35 +2070,75 @@ $('joinBtn').addEventListener('click', () => {
     });
 
     function attemptConnect(){
-        const conn = S.peer.connect(C.PRE + S.roomCode, {reliable: true});
+        if (activeConn) {
+            try { activeConn.close(); } catch(e){}
+            activeConn = null;
+        }
+
+        const conn = S.peer.connect(C.PRE + S.roomCode, {
+            reliable: true,
+            serialization: 'json'
+        });
+        activeConn = conn;
+
         let opened = false;
         const timeout = setTimeout(() => {
             if (!opened) {
                 retries++;
-                if (retries < maxRetries) {
-                    toast(`Retrying... (${retries}/${maxRetries})`, 'wa');
-                    attemptConnect();
+                if (retries <= maxRetries) {
+                    toast(`Connecting to room... attempt ${retries}/${maxRetries}`, 'inf');
+                    setTimeout(attemptConnect, 1200);
                 } else {
-                    toast('Could not connect. Check the code.', 'er');
+                    toast('Could not connect. Please check the code and ensure the host is waiting in lobby.', 'er');
                     setConn(false, 'Failed');
+                    jBtn.disabled = false;
+                    jBtn.textContent = 'Join Room';
                     backToLobby();
                 }
             }
-        }, 8000);
+        }, 4000);
 
         conn.on('open', () => {
-            opened = true; clearTimeout(timeout);
-            S.hostConn = conn; setConn(true, 'Connected');
+            opened = true;
+            clearTimeout(timeout);
+            S.hostConn = conn;
+            setConn(true, 'Connected');
+            jBtn.disabled = false;
+            jBtn.textContent = 'Join Room';
             conn.send({type: 'join', name: S.myName});
         });
+
         conn.on('data', data => handleHostMsg(data));
-        conn.on('close', () => { clearTimeout(timeout); setConn(false, 'Disconnected'); toast('Disconnected from host.', 'er'); });
-        conn.on('error', () => { clearTimeout(timeout); toast('Connection error.', 'er'); });
+
+        conn.on('close', () => {
+            clearTimeout(timeout);
+            setConn(false, 'Disconnected');
+            if (S.started && !S.over) {
+                toast('Disconnected from host.', 'er');
+            }
+        });
+
+        conn.on('error', err => {
+            console.warn('Connection error:', err);
+        });
     }
 
     S.peer.on('error', err => {
-        if (err.type === 'peer-unavailable') { toast('Room not found.', 'er'); setConn(false, 'Not found'); backToLobby(); }
-        else { toast(`Error: ${err.type}`, 'er'); setConn(false, 'Error'); }
+        if (err.type === 'peer-unavailable') {
+            retries++;
+            if (retries <= maxRetries) {
+                toast(`Searching for room... attempt ${retries}/${maxRetries}`, 'inf');
+                setTimeout(attemptConnect, 1200);
+                return;
+            }
+            toast('Room not found. Check code or ensure host has opened room.', 'er');
+            setConn(false, 'Not found');
+            jBtn.disabled = false;
+            jBtn.textContent = 'Join Room';
+            backToLobby();
+            return;
+        }
+        toast(`Connection notice: ${err.type}`, 'wa');
     });
 });
 
@@ -2066,6 +2181,8 @@ function applyGS(gs){
     S.over = gs.over ?? S.over;
     S.powerActive = gs.powerActive ?? false;
     S.placementsLeft = gs.placementsLeft ?? 1;
+    if (gs.customTimer !== undefined) C.TT = gs.customTimer;
+    if (gs.maxTurns !== undefined) S.maxTurns = gs.maxTurns;
 
     if (gs.scoredKeys) S.scoredKeys = new Set(gs.scoredKeys);
     if (gs.usedWords) S.usedWords = new Set(gs.usedWords);
