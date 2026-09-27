@@ -222,7 +222,10 @@
       <div style="font-weight:800; font-size:16px;">
         ♠️ Spades are Permanent Trump &bull; <span id="roundIndicator" style="color:var(--yellow-pop);">Round 1 of 5</span>
       </div>
-      <button class="candy-btn btn-ghost" id="viewScoresBtn" style="padding:6px 16px; font-size:13px;">📊 Scoreboard</button>
+      <div style="display:flex; gap:8px;">
+        <button class="candy-btn btn-ghost" id="openCbLobbyBtn" style="padding:6px 14px; font-size:13px;">⚙️ Room Setup</button>
+        <button class="candy-btn btn-ghost" id="viewScoresBtn" style="padding:6px 14px; font-size:13px;">📊 Scoreboard</button>
+      </div>
     </div>
 
     <!-- Green Felt Card Table -->
@@ -325,6 +328,8 @@
 
   <script src="shared/sfx.js"></script>
   <script src="shared/profile.js"></script>
+  <script src="shared/network.js"></script>
+  <script src="shared/lobby.js"></script>
   <script>
     /* ===========================================================
        CALLBREAK GAME ENGINE
@@ -702,7 +707,80 @@
       document.getElementById('scoresModal').style.display = 'none';
     });
 
-    window.addEventListener('load', startRound);
+    function initLobby() {
+      Lobby.init({
+        gameTitle: 'Callbreak (कॉल ब्रेक)',
+        gamePrefix: 'CB',
+        minPlayers: 4,
+        maxPlayers: 4,
+        defaultPlayers: 4,
+        customSettingsHTML: `
+          <div class="rule-option-row">
+            <span class="rule-label">Number of Rounds</span>
+            <select class="rule-select" id="cbRounds">
+              <option value="1">1 Round (Quick)</option>
+              <option value="3">3 Rounds (Standard)</option>
+              <option value="5" selected>5 Rounds (Classic)</option>
+            </select>
+          </div>
+          <div class="rule-option-row">
+            <span class="rule-label">Minimum Bid</span>
+            <select class="rule-select" id="cbMinBid">
+              <option value="1" selected>1 Trick</option>
+              <option value="2">2 Tricks</option>
+            </select>
+          </div>
+          <div class="rule-option-row">
+            <span class="rule-label">Trump Rule</span>
+            <select class="rule-select" id="cbTrumpRule">
+              <option value="strict" selected>Strict (Must beat spade)</option>
+              <option value="loose">Classic (Any spade trumps)</option>
+            </select>
+          </div>
+        `,
+        getCustomSettings: () => ({
+          rounds: parseInt(document.getElementById('cbRounds')?.value || 5),
+          minBid: parseInt(document.getElementById('cbMinBid')?.value || 1),
+          trumpRule: document.getElementById('cbTrumpRule')?.value || 'strict'
+        }),
+        onStart: ({ seats, settings, isHost }) => {
+          startConfiguredGame(seats, settings, isHost);
+        }
+      });
+    }
+
+    function startConfiguredGame(configuredSeats, settings, isHost) {
+      TOTAL_ROUNDS = settings.rounds || 5;
+      currentRound = 1;
+      roundScores = [];
+      const seatsNames = ['South', 'West', 'North', 'East'];
+      const myProf = Profile.get();
+
+      players = configuredSeats.map((s, idx) => ({
+        id: s.id || `p${idx}`,
+        seat: seatsNames[idx],
+        name: s.name,
+        isHuman: s.type === 'human' || (s.type === 'online' && s.id === myProf.id),
+        hand: [],
+        bid: 0,
+        won: 0,
+        totalScore: 0
+      }));
+
+      // Update seat display names
+      document.getElementById('nameWest').textContent = players[1].name;
+      document.getElementById('nameNorth').textContent = players[2].name;
+      document.getElementById('nameEast').textContent = players[3].name;
+
+      startRound();
+    }
+
+    document.getElementById('openCbLobbyBtn').addEventListener('click', () => {
+      SFX.tap();
+      initLobby();
+    });
+
+    window.addEventListener('load', initLobby);
   </script>
 </body>
 </html>

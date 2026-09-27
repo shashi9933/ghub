@@ -293,6 +293,11 @@
 
   <main class="game-arena">
 
+    <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:8px;">
+      <span style="font-weight:800; font-size:16px;">🎴 Uno Party Arena</span>
+      <button class="candy-btn btn-ghost" id="openUnoLobbyBtn" style="padding:6px 16px; font-size:13px;">⚙️ Room Setup & Bots</button>
+    </div>
+
     <!-- Opponents Section -->
     <div class="opponents-row" id="opponentsRow">
       <!-- Injected dynamically: Seats for Bot 1, Bot 2, Bot 3 or Peer players -->
@@ -365,9 +370,11 @@
 
   <script src="shared/sfx.js"></script>
   <script src="shared/profile.js"></script>
+  <script src="shared/network.js"></script>
+  <script src="shared/lobby.js"></script>
   <script>
     /* ===========================================================
-       UNO GAME ENGINE
+       UNO GAME ENGINE WITH CUSTOM LOBBY & RULES
        =========================================================== */
     const COLORS = ['red', 'blue', 'green', 'yellow'];
     const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'skip', 'rev', '+2'];
@@ -376,10 +383,12 @@
     let discardPile = [];
     let players = [];
     let curTurn = 0;
-    let turnDirection = 1; // 1 = clockwise, -1 = counter
+    let turnDirection = 1;
     let currentColor = 'red';
     let hasDrawnThisTurn = false;
     let unoShouted = false;
+    let currentSettings = { initCards: 7, stacking: true, drawRule: 'one' };
+    let isGameHost = true;
 
     // Create 108 Card Deck
     function buildDeck() {
@@ -413,24 +422,29 @@
       return arr;
     }
 
-    function startNewGame() {
+    function startConfiguredGame(configuredSeats, settings, isHost) {
       deck = buildDeck();
       discardPile = [];
       curTurn = 0;
       turnDirection = 1;
       hasDrawnThisTurn = false;
       unoShouted = false;
+      currentSettings = settings || currentSettings;
+      isGameHost = isHost;
 
       const myProf = Profile.get();
-      players = [
-        { id: 'me', name: myProf.name, avatar: myProf.avatar, isHuman: true, hand: [] },
-        { id: 'bot1', name: 'RoboBean 🤖', avatar: '🤖', isHuman: false, hand: [] },
-        { id: 'bot2', name: 'SpeedyFox 🦊', avatar: '🦊', isHuman: false, hand: [] },
-        { id: 'bot3', name: 'PartyPanda 🐼', avatar: '🐼', isHuman: false, hand: [] }
-      ];
+      players = configuredSeats.map((s, idx) => ({
+        id: s.id || `p_${idx}`,
+        name: s.name,
+        avatar: s.avatar,
+        isHuman: s.type === 'human' || (s.type === 'online' && s.id === myProf.id),
+        difficulty: s.difficulty || 'medium',
+        hand: []
+      }));
 
-      // Deal 7 cards to each
-      for (let i = 0; i < 7; i++) {
+      // Deal configured number of cards (e.g. 5, 7, or 10 cards)
+      const numCards = currentSettings.initCards || 7;
+      for (let i = 0; i < numCards; i++) {
         for (const p of players) {
           p.hand.push(deck.pop());
         }
@@ -448,6 +462,29 @@
       SFX.cardDeal();
       renderAll();
       checkTurn();
+
+      // Listen for remote moves
+      Network.onData((_, data) => {
+        if (data.type === 'uno_move') {
+          handleRemoteMove(data);
+        } else if (data.type === 'uno_draw') {
+          handleRemoteDraw(data);
+        }
+      });
+    }
+
+    function handleRemoteMove(data) {
+      const p = players[data.playerIdx];
+      discardPile.push(data.card);
+      SFX.cardPlay();
+      if (data.chosenColor) currentColor = data.chosenColor;
+      else if (data.card.color !== 'wild') currentColor = data.card.color;
+      advanceTurn(data.steps || 1);
+    }
+
+    function handleRemoteDraw(data) {
+      drawCards(data.playerIdx, data.count || 1, false);
+      advanceTurn(1);
     }
 
     function canPlay(card) {
@@ -726,7 +763,7 @@
       }
       setTimeout(() => {
         if (confirm(`${winner.name} won! Play another game?`)) {
-          startNewGame();
+          initLobby();
         }
       }, 2500);
     }
@@ -757,7 +794,54 @@
       document.getElementById('shoutUnoBtn').style.display = 'none';
     });
 
-    window.addEventListener('load', startNewGame);
+    function initLobby() {
+      Lobby.init({
+        gameTitle: 'Uno Party',
+        gamePrefix: 'UNO',
+        minPlayers: 2,
+        maxPlayers: 6,
+        defaultPlayers: 4,
+        customSettingsHTML: `
+          <div class="rule-option-row">
+            <span class="rule-label">Initial Cards Dealt</span>
+            <select class="rule-select" id="unoInitCards">
+              <option value="5">5 Cards (Fast)</option>
+              <option value="7" selected>7 Cards (Classic)</option>
+              <option value="10">10 Cards (Marathon)</option>
+            </select>
+          </div>
+          <div class="rule-option-row">
+            <span class="rule-label">+2 / +4 Stacking Allowed</span>
+            <select class="rule-select" id="unoStacking">
+              <option value="yes" selected>Yes (Stackable)</option>
+              <option value="no">No (Classic)</option>
+            </select>
+          </div>
+          <div class="rule-option-row">
+            <span class="rule-label">Draw Penalty Rule</span>
+            <select class="rule-select" id="unoDrawRule">
+              <option value="one" selected>Draw 1 card & pass</option>
+              <option value="match">Draw until playable</option>
+            </select>
+          </div>
+        `,
+        getCustomSettings: () => ({
+          initCards: parseInt(document.getElementById('unoInitCards')?.value || 7),
+          stacking: document.getElementById('unoStacking')?.value === 'yes',
+          drawRule: document.getElementById('unoDrawRule')?.value || 'one'
+        }),
+        onStart: ({ seats, settings, isHost }) => {
+          startConfiguredGame(seats, settings, isHost);
+        }
+      });
+    }
+
+    document.getElementById('openUnoLobbyBtn').addEventListener('click', () => {
+      SFX.tap();
+      initLobby();
+    });
+
+    window.addEventListener('load', initLobby);
   </script>
 </body>
 </html>

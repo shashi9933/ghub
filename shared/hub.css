@@ -650,3 +650,58 @@ body {
   .games-grid { grid-template-columns: 1fr; gap: 18px; padding: 0 16px; }
   .game-actions { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   LOBBY SEAT CARDS & HOUSE RULES CUSTOMIZER
+   ========================================================================== */
+.seats-list-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 600px) {
+  .seats-list-grid { grid-template-columns: 1fr; }
+}
+
+.lobby-seat-card {
+  background: rgba(0, 0, 0, 0.28);
+  border: 2px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+.lobby-seat-card:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rule-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.rule-option-row:last-child {
+  border-bottom: none;
+}
+.rule-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.rule-select {
+  background: var(--bg-deep);
+  color: #fff;
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  outline: none;
+}
+

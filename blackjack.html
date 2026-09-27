@@ -161,8 +161,11 @@
 
   <main class="bj-arena">
 
-    <div style="display:flex; justify-content:space-between; width:100%;">
-      <span style="font-weight:800;">Blackjack pays 3 to 2 &bull; Dealer stands on 17</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-weight:800;" id="bjRulesInfo">Blackjack pays 3:2 &bull; Dealer stands on 17</span>
+        <button class="candy-btn btn-ghost" id="openBjLobbyBtn" style="padding:4px 12px; font-size:12px;">⚙️ Table Setup</button>
+      </div>
       <span style="font-weight:800; color:var(--yellow-pop);">Current Bet: 🪙<span id="currentBetDisplay">100</span></span>
     </div>
 
@@ -216,6 +219,8 @@
 
   <script src="shared/sfx.js"></script>
   <script src="shared/profile.js"></script>
+  <script src="shared/network.js"></script>
+  <script src="shared/lobby.js"></script>
   <script>
     /* ===========================================================
        BLACKJACK 21 GAME ENGINE
@@ -430,9 +435,70 @@
     document.getElementById('standBtn').addEventListener('click', stand);
     document.getElementById('doubleBtn').addEventListener('click', doubleDown);
 
-    window.addEventListener('load', () => {
-      deck = buildDeck();
+    function initLobby() {
+      Lobby.init({
+        gameTitle: 'Blackjack 21',
+        gamePrefix: 'BJ',
+        minPlayers: 1,
+        maxPlayers: 1,
+        defaultPlayers: 1,
+        customSettingsHTML: `
+          <div class="rule-option-row">
+            <span class="rule-label">Number of Decks</span>
+            <select class="rule-select" id="bjDecks">
+              <option value="1">1 Deck (Single Deck)</option>
+              <option value="2" selected>2 Decks (Double Deck)</option>
+              <option value="6">6 Decks (Shoe)</option>
+            </select>
+          </div>
+          <div class="rule-option-row">
+            <span class="rule-label">Dealer Soft 17</span>
+            <select class="rule-select" id="bjSoft17">
+              <option value="stand" selected>Dealer Stands on Soft 17</option>
+              <option value="hit">Dealer Hits on Soft 17</option>
+            </select>
+          </div>
+          <div class="rule-option-row">
+            <span class="rule-label">Default Bet</span>
+            <select class="rule-select" id="bjDefaultBet">
+              <option value="25">🪙 25</option>
+              <option value="50">🪙 50</option>
+              <option value="100" selected>🪙 100</option>
+              <option value="500">🪙 500</option>
+            </select>
+          </div>
+        `,
+        getCustomSettings: () => ({
+          decks: parseInt(document.getElementById('bjDecks')?.value || 2),
+          soft17: document.getElementById('bjSoft17')?.value || 'stand',
+          defaultBet: parseInt(document.getElementById('bjDefaultBet')?.value || 100)
+        }),
+        onStart: ({ seats, settings, isHost }) => {
+          startConfiguredGame(seats, settings, isHost);
+        }
+      });
+    }
+
+    function startConfiguredGame(configuredSeats, settings, isHost) {
+      currentBet = settings.defaultBet || 100;
+      document.getElementById('currentBetDisplay').textContent = currentBet;
+      document.getElementById('bjRulesInfo').textContent = `Blackjack pays 3:2 • ${settings.soft17 === 'stand' ? 'Dealer stands on 17' : 'Dealer hits soft 17'} • ${settings.decks} Decks`;
+
+      const numDecks = settings.decks || 2;
+      deck = [];
+      for (let i = 0; i < numDecks; i++) {
+        deck.push(...buildDeck());
+      }
+      deck = shuffle(deck);
+      Toast.show('Table setup complete! Tap Deal Hand to start.', 'ok');
+    }
+
+    document.getElementById('openBjLobbyBtn').addEventListener('click', () => {
+      SFX.tap();
+      initLobby();
     });
+
+    window.addEventListener('load', initLobby);
   </script>
 </body>
 </html>

@@ -140,6 +140,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
       <span style="font-weight:800; font-size:16px;">Connect 4 in a row to win!</span>
       <div style="display:flex; gap:8px;">
+        <button class="candy-btn btn-ghost" id="openC4LobbyBtn" style="padding:6px 14px; font-size:12px;">⚙️ Room Setup</button>
         <button class="candy-btn btn-ghost" id="modeAiBtn" style="padding:6px 14px; font-size:12px;">🤖 vs AI</button>
         <button class="candy-btn btn-ghost" id="modePvpBtn" style="padding:6px 14px; font-size:12px;">👥 2 Players</button>
       </div>
@@ -178,6 +179,8 @@
 
   <script src="shared/sfx.js"></script>
   <script src="shared/profile.js"></script>
+  <script src="shared/network.js"></script>
+  <script src="shared/lobby.js"></script>
   <script>
     /* ===========================================================
        CONNECT 4 GAME ENGINE WITH MINIMAX AI
@@ -228,6 +231,7 @@
 
       SFX.drop();
       renderGrid();
+      Network.send({ type: 'c4_drop', col, player: curPlayer });
 
       const winLine = checkWin(board, curPlayer);
       if (winLine) {
@@ -414,10 +418,76 @@
       initBoard();
     });
 
-    window.addEventListener('load', () => {
-      document.getElementById('modeAiBtn').classList.add('btn-lime');
+    function initLobby() {
+      Lobby.init({
+        gameTitle: 'Connect 4',
+        gamePrefix: 'C4',
+        minPlayers: 2,
+        maxPlayers: 2,
+        defaultPlayers: 2,
+        customSettingsHTML: `
+          <div class="rule-option-row">
+            <span class="rule-label">Game Mode</span>
+            <select class="rule-select" id="c4LobbyMode">
+              <option value="ai" selected>🤖 Play vs Smart AI</option>
+              <option value="pvp">👥 2 Players (Local / Online)</option>
+            </select>
+          </div>
+          <div class="rule-option-row">
+            <span class="rule-label">AI Difficulty</span>
+            <select class="rule-select" id="c4LobbyDiff">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Normal</option>
+              <option value="hard">Master (Unbeatable)</option>
+            </select>
+          </div>
+          <div class="rule-option-row">
+            <span class="rule-label">First Turn</span>
+            <select class="rule-select" id="c4FirstTurn">
+              <option value="1" selected>🔴 Player 1 (Red)</option>
+              <option value="2">🟡 Player 2 (Yellow)</option>
+            </select>
+          </div>
+        `,
+        getCustomSettings: () => ({
+          mode: document.getElementById('c4LobbyMode')?.value || 'ai',
+          diff: document.getElementById('c4LobbyDiff')?.value || 'medium',
+          firstTurn: parseInt(document.getElementById('c4FirstTurn')?.value || 1)
+        }),
+        onStart: ({ seats, settings, isHost }) => {
+          startConfiguredGame(seats, settings, isHost);
+        }
+      });
+    }
+
+    function startConfiguredGame(configuredSeats, settings, isHost) {
+      isAiMode = (settings.mode === 'ai');
+      curPlayer = settings.firstTurn || 1;
       initBoard();
+
+      // Listen for online remote moves
+      Network.onData((_, data) => {
+        if (data.type === 'c4_drop') {
+          dropDisc(data.col, data.player);
+          SFX.drop();
+          renderGrid();
+          const winLine = checkWin(board, data.player);
+          if (winLine) {
+            handleWin(data.player, winLine);
+          } else {
+            curPlayer = (data.player === 1) ? 2 : 1;
+            updateBanner();
+          }
+        }
+      });
+    }
+
+    document.getElementById('openC4LobbyBtn').addEventListener('click', () => {
+      SFX.tap();
+      initLobby();
     });
+
+    window.addEventListener('load', initLobby);
   </script>
 </body>
 </html>
