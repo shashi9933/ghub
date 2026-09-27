@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>WordGrid — Online & Local Multiplayer Word Game</title>
-<meta name="description" content="A strategic multiplayer word game. Place letters on a 12×12 grid, form valid English words with Hindi meanings, unlock dual-placement powers, and outscore your friends." />
+<meta name="description" content="A strategic multiplayer word game. Place letters on a 15×15 grid, form valid English words (3+ letters) with Hindi meanings, unlock dual-placement powers, and outscore your friends." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@500;700;800&display=swap" rel="stylesheet" />
@@ -191,9 +191,9 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 .power-bar-btn{width:min(540px,100%);height:32px;border-radius:var(--r-s);background:linear-gradient(135deg,var(--power),#ea580c);color:#fff;font-weight:800;font-size:11px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 3px 12px var(--power-glow);flex-shrink:0}
 
 .bwrap{width:100%;flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;margin:2px 0}
-.board{width:min(94vw,calc(100dvh - 275px),460px);max-width:460px;aspect-ratio:1;display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(12,1fr);gap:2px;padding:4px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-l);box-shadow:var(--sh-l);touch-action:manipulation}
+.board{width:min(94vw,calc(100dvh - 265px),520px);max-width:520px;aspect-ratio:1;display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);gap:1.5px;padding:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-l);box-shadow:var(--sh-l);touch-action:manipulation}
 .board.power-active{border-color:rgba(245,158,11,.6);box-shadow:0 0 18px var(--power-glow)}
-.cell{background:var(--cell);border-radius:3px;display:flex;align-items:center;justify-content:center;position:relative;font-size:clamp(10px,2vw,17px);font-weight:900;user-select:none;cursor:default;transition:background var(--tr),box-shadow var(--tr),transform .1s ease;min-width:0;min-height:0}
+.cell{background:var(--cell);border-radius:3px;display:flex;align-items:center;justify-content:center;position:relative;font-size:clamp(8px,1.6vw,15px);font-weight:900;user-select:none;cursor:default;transition:background var(--tr),box-shadow var(--tr),transform .1s ease;min-width:0;min-height:0}
 .cell.click{cursor:pointer}.cell.click:hover{background:var(--cell-h)}
 .cell.occ{background:var(--cell-occ)}
 .cell.fresh{background:rgba(34,211,167,.18);box-shadow:inset 0 0 0 1.5px var(--ok);animation:cp .4s ease}
@@ -486,7 +486,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <div class="hero">
         <div class="hero-badge"><span class="hero-dot"></span>Multiplayer Word Game</div>
         <h1>Build.<br>Connect.<br><span class="gr">Win.</span></h1>
-        <p>Place letters on a 12×12 grid. Form valid English words (Horizontal →, Vertical ↓, or Diagonal ↘ North-West to South-East) to score points and discover Hindi meanings. 6+ letter words unlock Dual-Placement Powers!</p>
+        <p>Place letters on a 15×15 grid. Form valid English words (3+ letters: Horizontal →, Vertical ↓, or Diagonal ↘ North-West to South-East) to score points and discover Hindi meanings. 6+ letter words unlock Dual-Placement Powers!</p>
         
         <div class="power-feature-badge">
             <span class="pf-icon">⚡</span>
@@ -497,7 +497,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         </div>
 
         <div class="tags">
-            <span class="tag">12 × 12 Board</span>
+            <span class="tag">15 × 15 Board</span>
             <span class="tag">2–4 Players</span>
             <span class="tag">Local & Online</span>
             <span class="tag">Hindi Meanings</span>
@@ -632,7 +632,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
    CONFIG
 =========================================================== */
 const C = {
-    BS: 12, TT: 60, MAX_SKIP: 6,
+    BS: 15, TT: 60, MAX_SKIP: 6,
     API: 'https://api.dictionaryapi.dev/api/v2/entries/en/',
     DICT_URLS: [
         'https://raw.githubusercontent.com/raun/Scrabble/master/words.txt',
@@ -640,7 +640,7 @@ const C = {
         'https://raw.githubusercontent.com/jesstess/Scrabble/master/scrabble/sowpods.txt',
     ],
     COLORS: ['#6366f1','#f43f5e','#22d3a7','#fbbf24'],
-    CTR: {r:5,c:5},
+    CTR: {r:7,c:7},
     PRE: 'wg-r-',
 };
 // Only Horizontal (→), Vertical (↓), and One Diagonal: North-West to South-East (↘) are allowed
@@ -912,25 +912,18 @@ function inB(r, c){ return r >= 0 && r < C.BS && c >= 0 && c < C.BS; }
 /* ===========================================================
    DICTIONARY & HINDI TRANSLATION
 =========================================================== */
-/* Whitelist of genuine everyday English words for 2-letter combos.
-   Obscure non-meaningful combos (like ab, aa, ae, qi, za, etc.) are strictly excluded. */
-const VALID_2_LETTER = new Set([
-    'am', 'an', 'as', 'at', 'be', 'by', 'do', 'go', 'he', 'hi',
-    'if', 'in', 'is', 'it', 'me', 'my', 'no', 'of', 'oh', 'ok',
-    'on', 'or', 'ox', 'so', 'to', 'up', 'us', 'we'
+// Disallowed non-words, abbreviations and acronyms that should never score
+const DISALLOWED_WORDS = new Set([
+    'abo', 'abe', 'abey', 'bcd', 'xyz', 'bbl', 'bb', 'ccm', 'cmdg', 'bkg', 'bks', 'bls', 'bnf', 'cdf', 'cdg', 'cdr'
 ]);
 
+// Minimum word length is 3 letters to prevent accidental 2-letter clutter when letters attach
 function checkWord(w) {
     if (!w) return false;
     w = String(w).trim().toLowerCase();
-    if (w.length < 2 || w.length > C.BS) return false;
+    if (w.length < 3 || w.length > C.BS) return false;
     if (!/^[a-z]+$/.test(w)) return false;
-
-    // Strict rule for 2-letter words: only real everyday English words with clear meaning
-    if (w.length === 2) {
-        return VALID_2_LETTER.has(w);
-    }
-
+    if (DISALLOWED_WORDS.has(w)) return false;
     if (dictReady) return DICT.has(w);
     return false;
 }
@@ -1002,24 +995,50 @@ async function lookupDef(w){
 function findWordsThrough(board, row, col) {
     const results = [];
     for (const dir of DIRS) {
+        // Walk back to the start of the contiguous letter sequence in this direction
         let sr = row, sc = col;
         while(inB(sr - dir.dr, sc - dir.dc) && board[sr - dir.dr][sc - dir.dc]) {
             sr -= dir.dr; sc -= dir.dc;
         }
-        let word = '', r = sr, c = sc;
+
+        // Collect all cells in the contiguous line
+        const lineCells = [];
+        let r = sr, c = sc;
         while(inB(r, c) && board[r][c]) {
-            word += board[r][c];
+            lineCells.push({r, c, letter: board[r][c]});
             r += dir.dr; c += dir.dc;
         }
-        if (word.length >= 2) {
-            const key = `${word}-${sr}-${sc}-${dir.name}`;
-            const cells = [];
-            let wr = sr, wc = sc;
-            for (let i = 0; i < word.length; i++) {
-                cells.push({r: wr, c: wc});
-                wr += dir.dr; wc += dir.dc;
+        // If line is less than 3 letters, no valid word can be formed
+        if (lineCells.length < 3) continue;
+
+        const placedIdx = lineCells.findIndex(cell => cell.r === row && cell.c === col);
+        if (placedIdx === -1) continue;
+
+        // Find the LONGEST meaningful English word that spans across the placed cell
+        let bestCandidate = null;
+        let maxLen = 0;
+
+        for (let i = 0; i <= placedIdx; i++) {
+            for (let j = placedIdx; j < lineCells.length; j++) {
+                const len = j - i + 1;
+                if (len < 3 || len <= maxLen) continue;
+                const subStr = lineCells.slice(i, j + 1).map(c => c.letter).join('');
+                if (checkWord(subStr)) {
+                    maxLen = len;
+                    bestCandidate = {
+                        word: subStr,
+                        key: `${subStr}-${lineCells[i].r}-${lineCells[i].c}-${dir.name}`,
+                        startR: lineCells[i].r,
+                        startC: lineCells[i].c,
+                        dir,
+                        cells: lineCells.slice(i, j + 1).map(c => ({r: c.r, c: c.c}))
+                    };
+                }
             }
-            results.push({word, key, startR: sr, startC: sc, dir, cells});
+        }
+
+        if (bestCandidate) {
+            results.push(bestCandidate);
         }
     }
     return results;
@@ -2135,7 +2154,7 @@ function showRules(){
     o.innerHTML = `<div class="modal">
         <h2>📖 WordGrid Rules & Powers</h2>
         <h3>🎯 Game Goal</h3>
-        <p>Form valid English words on a 12×12 board to score points, discover their Hindi meanings, and use strategic power-ups to outplay your opponents!</p>
+        <p>Form valid English words (3+ letters) on a 15×15 board to score points, discover their Hindi meanings, and use strategic power-ups to outplay your opponents!</p>
 
         <h3>⚡ 6-Letter Word Power System</h3>
         <ul>
@@ -2153,8 +2172,8 @@ function showRules(){
         <h3>📝 Basic Mechanics</h3>
         <ul>
             <li>On your turn, <b>pick a letter</b> (A–Z) and <b>tap an empty cell</b>.</li>
-            <li>Valid English words in permitted directions: <b>Horizontal (→)</b>, <b>Vertical (↓)</b>, or <b>Diagonal (↘ North-West to South-East only)</b> through that cell earn <b>points = word length</b>.</li>
-            <li>Only correct English dictionary words score marks. Abbreviations, acronyms, and non-words do not score.</li>
+            <li>Valid English words of <b>3 or more letters</b> in permitted directions: <b>Horizontal (→)</b>, <b>Vertical (↓)</b>, or <b>Diagonal (↘ North-West to South-East only)</b> through that cell earn <b>points = word length</b>.</li>
+            <li>Only the <b>longest meaningful English word</b> formed along each direction receives marks. Non-words, abbreviations, and accidental 2-letter attachments do not score.</li>
             <li>Each unique word can only be scored once per game.</li>
         </ul>
 
